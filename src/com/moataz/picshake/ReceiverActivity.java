@@ -1030,6 +1030,7 @@ AccelerometerListener {
 				
 				return bitmap;
 			}
+			//fix this return
 			return null;
 		}
 
