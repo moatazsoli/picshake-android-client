@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -31,9 +32,11 @@ import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
@@ -903,7 +906,31 @@ AccelerometerListener {
 		//		Toast.makeText(getBaseContext(), "Motion detected", 
 		//				Toast.LENGTH_SHORT).show();
 		// Execute DownloadImage AsyncTask
-		new DownloadImage().execute(URL);
+		try {
+			final List<String> x = new GetImageUrls().execute(URL).get();
+			new AlertDialog.Builder(this)
+		    .setTitle("Getting images")
+		    .setMessage("Are you sure you want to download all"+ x.size() + "images?")
+		    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+		        @SuppressWarnings("unchecked")
+				public void onClick(DialogInterface dialog, int which) { 
+		            new DownloadImages().execute(x);
+		        }
+		     })
+		    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+		        public void onClick(DialogInterface dialog, int which) { 
+		            // do nothing
+		        }
+		     })
+		     .show();
+			
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
@@ -926,7 +953,7 @@ AccelerometerListener {
 
 	}
 
-	private class DownloadImage extends AsyncTask<String, Void, Bitmap> {
+	private class GetImageUrls extends AsyncTask<String, Void, List<String>> {
 
 		@Override
 		protected void onPreExecute() {
@@ -934,7 +961,7 @@ AccelerometerListener {
 			// Create a progressdialog
 			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
 			// Set progressdialog title
-			mProgressDialog.setTitle("Download Image");
+			mProgressDialog.setTitle("Getting Images");
 			// Set progressdialog message
 			mProgressDialog.setMessage("Loading...");
 			mProgressDialog.setIndeterminate(false);
@@ -943,7 +970,7 @@ AccelerometerListener {
 		}
 
 		@Override
-		protected Bitmap doInBackground(String... URL) {
+		protected List<String> doInBackground(String... URL) {
 
 			HttpClient httpClient = new DefaultHttpClient();
 			String myURL = "https://hezzapp.appspot.com/getpic";
@@ -994,11 +1021,56 @@ AccelerometerListener {
 			{
 				return null;
 			}
+			return items;
+		}
+
+		@Override
+		protected void onPostExecute(List<String> result) {
+			// Set the bitmap into ImageView
+//			image.setImageBitmap(result);
+			mProgressDialog.dismiss();
+			if(result == null)
+			{
+				String root = Environment.getExternalStorageDirectory().toString();
+				System.out.println("ROOOT" + root);
+				passcode.setText("");
+				runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(ReceiverActivity.this, "ERROR Or No Pic Found- fix me", 
+								Toast.LENGTH_SHORT).show();
+					}
+				});
+				
+			}
+		}
+	}
+	
+	private class DownloadImages extends AsyncTask<List<String>, Void, Integer> {
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
+			mProgressDialog.setTitle("Download Image");
+			mProgressDialog.setMessage("Downloading...");
+			mProgressDialog.setIndeterminate(false);
+			mProgressDialog.show();
+		}
+
+		@Override
+		protected Integer doInBackground(List<String>... list) {
+			List<String> items = list[0];
+			String imageURL = "";
+			Bitmap bitmap;
+			if(items.size()==0)
+			{
+				return null;
+			}
 			for (Iterator iterator = items.iterator(); iterator.hasNext();) 
 			{
 				imageURL = (String) iterator.next();
 
-				Bitmap bitmap = null;
+				bitmap = null;
 				try {
 					// Download Image from URL
 					InputStream input = new java.net.URL(imageURL).openStream();
@@ -1006,6 +1078,7 @@ AccelerometerListener {
 					bitmap = BitmapFactory.decodeStream(input);
 				} catch (Exception e) {
 					e.printStackTrace();
+					return null;
 				}
 				
 				String root = Environment.getExternalStorageDirectory().toString();
@@ -1020,86 +1093,39 @@ AccelerometerListener {
 				if (file.exists ()) file.delete (); 
 				try {
 					FileOutputStream out = new FileOutputStream(file);
+					//TODO: the following should be fixed to account for JPEG and PNG
+					// and store them in that format. Also clean other TODOs.
 					bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
 					out.flush();
 					out.close();
 					sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://"+ Environment.getExternalStorageDirectory())));
 				} catch (Exception e) {
 					e.printStackTrace();
+					return null;
 				}
-				
-				return bitmap;
 			}
 			//fix this return
-			return null;
+			return 1;
 		}
 
 		@Override
-		protected void onPostExecute(Bitmap result) {
+		protected void onPostExecute(Integer result) {
 			// Set the bitmap into ImageView
 //			image.setImageBitmap(result);
+			mProgressDialog.dismiss();
 			if(result == null)
 			{
 				String root = Environment.getExternalStorageDirectory().toString();
 				System.out.println("ROOOT" + root);
-				mProgressDialog.dismiss();
 				passcode.setText("");
 				runOnUiThread(new Runnable() {
 					public void run() {
-						Toast.makeText(ReceiverActivity.this, "No Pic Found", 
+						Toast.makeText(ReceiverActivity.this, "ERROR!!", 
 								Toast.LENGTH_SHORT).show();
 					}
 				});
-				
 			}
-			/*else{
-				String root = Environment.getExternalStorageDirectory().toString();
-				System.out.println("ROOOT" + root);
-				File myDir = new File("/storage/emulated/0/DCIM/Camera/");    
-				myDir.mkdirs();
-				Random generator = new Random();
-				int n = 10000;
-				n = generator.nextInt(n);
-				String fname = "MYImage-"+ n +".jpg";
-				File file = new File (myDir, fname);
-				if (file.exists ()) file.delete (); 
-				try {
-					FileOutputStream out = new FileOutputStream(file);
-					result.compress(Bitmap.CompressFormat.JPEG, 100, out);
-					out.flush();
-					out.close();
-					sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://"+ Environment.getExternalStorageDirectory())));
-
-
-					///
-					int targetW = image.getWidth();
-					int targetH = image.getHeight();
-					BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-					bmOptions.inJustDecodeBounds = true;
-					BitmapFactory.decodeFile(file.getPath(), bmOptions);
-					int photoW = bmOptions.outWidth;
-					int photoH = bmOptions.outHeight;
-					int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
-					// Decode the image file into a Bitmap sized to fill the View
-					bmOptions.inJustDecodeBounds = false;
-					bmOptions.inSampleSize = scaleFactor;
-					bmOptions.inPurgeable = true;
-
-					Bitmap bitmap = BitmapFactory.decodeFile(file.getPath(), bmOptions);
-					image.setImageBitmap(bitmap);
-					///
-
-					Toast.makeText(getBaseContext(), "Original Pic is Saved in Gallery", 
-							Toast.LENGTH_LONG).show();
-
-					passcode.setText("");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
-				// Close progressdialog
-				mProgressDialog.dismiss();
-			}*/
+			
 		}
 	}
 
