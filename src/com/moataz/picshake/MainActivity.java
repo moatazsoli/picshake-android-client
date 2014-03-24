@@ -19,6 +19,8 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		//TODO:remove these checks and move them only to send
+		// activity when the offline token is implemented
 		if (!isGPSEnabled()) {
 			showGpsSettingsAlert();
 		}
@@ -26,7 +28,7 @@ public class MainActivity extends Activity {
 		{
 			showNoInternetSettingsAlert();
 		}
-
+		
 
 	}
 	
@@ -162,16 +164,28 @@ public class MainActivity extends Activity {
 	}
 	
 	
-	
-	
-	
-//	/** Called when the user clicks the Send button */
-//	public void receiveAvtivity(View view) {
-//	    Intent intent = new Intent(this, DisplayMessageActivity.class);
-//	    EditText editText = (EditText) findViewById(R.id.edit_message);
-//	    String message = editText.getText().toString();
-//	    intent.putExtra(EXTRA_MESSAGE, message);
-//	    startActivity(intent);
+		
+//	/**
+//	 * Function to show alert dialog
+//	 * */
+//	public void showAlert(String aInTitle, String aInMessage, Context aInContext){
+//		AlertDialog.Builder alertDialog = new AlertDialog.Builder(aInContext);
+//   	 
+//        // Setting Dialog Title
+//        alertDialog.setTitle(aInTitle);
+// 
+//        // Setting Dialog Message
+//        alertDialog.setMessage(aInMessage);
+// 
+//        // on pressing cancel button
+//        alertDialog.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
+//            public void onClick(DialogInterface dialog, int which) {
+//            dialog.cancel();
+//            }
+//        });
+// 
+//        // Showing Alert Message
+//        alertDialog.show();
 //	}
 
 }

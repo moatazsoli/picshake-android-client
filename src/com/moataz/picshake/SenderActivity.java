@@ -168,8 +168,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		 * handle callbacks.
 		 */
 		mLocationClient = new LocationClient(this, this, this);
-		startUpdates();
-        
+		connectAndStartLocationUpdates();
         if(selectOrCamera == 1)
 		{
 			if (!isDeviceSupportCamera()) {
@@ -186,7 +185,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 				
 				@Override
 				public void onClick(View arg0) {
-					
+					startUpdates();
 					Intent i = new Intent(
 							Intent.ACTION_PICK,
 							android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -195,6 +194,12 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 				}
 			});
 		}
+	}
+	
+	private void connectAndStartLocationUpdates()
+	{
+		mUpdatesRequested = true;
+		mLocationClient.connect();
 	}
 	
 	/**
@@ -208,7 +213,6 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	
 	private void captureImage() {
 	    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-	 
 	    fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
 	 
 	    intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
@@ -400,6 +404,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		
 		case CAMERA_CAPTURE_IMAGE_REQUEST_CODE:
 			if (resultCode == RESULT_OK) {
+				
                 // successfully captured the image
                 // display it in image view
 //                previewCapturedImage();
