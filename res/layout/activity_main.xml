@@ -38,4 +38,13 @@
         android:onClick="receiveActivity"
         android:text="@string/receive_button" />
 
+    <Button
+        android:id="@+id/takepic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:text="Take a pic"
+        android:onClick="takepic" />
+
 </RelativeLayout>

@@ -2,9 +2,13 @@ package com.moataz.picshake;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -24,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
@@ -32,6 +37,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -44,7 +50,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -62,7 +67,10 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	// A request to connect to Location Services
 	private LocationRequest mLocationRequest;
 	public final static int RESULT_LOAD_IMAGE = 5000;
-
+	private static final int CAMERA_CAPTURE_IMAGE_REQUEST_CODE = 100;
+    public static final int MEDIA_TYPE_IMAGE = 1;
+    private static final String IMAGE_DIRECTORY_NAME = "Hello Camera";
+    private Uri fileUri; // file url to store image/video
 	private Button uploadButton;
     private int serverResponseCode = 0;
     private ProgressDialog dialog = null;
@@ -99,9 +107,11 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		setContentView(R.layout.activity_sender);
 		// Show the Up button in the action bar.
 		setupActionBar();
-		
+		Intent mIntent = getIntent();
+		int selectOrCamera = mIntent.getIntExtra("selectOrCamera", 0);
 		// Upload stuff
 		uploadButton = (Button)findViewById(R.id.send_button);
+		Button buttonLoadImage = (Button) findViewById(R.id.select_pic);
         passcode = (EditText)findViewById(R.id.passcode);
         
         uploadButton.setOnClickListener(new OnClickListener() {            
@@ -159,20 +169,33 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		 */
 		mLocationClient = new LocationClient(this, this, this);
 		
-		Button buttonLoadImage = (Button) findViewById(R.id.select_pic);
-        buttonLoadImage.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View arg0) {
-				startUpdates();
-				
-				Intent i = new Intent(
-						Intent.ACTION_PICK,
-						android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-				
-				startActivityForResult(i, RESULT_LOAD_IMAGE);
+        
+        if(selectOrCamera == 1)
+		{
+			if (!isDeviceSupportCamera()) {
+	            Toast.makeText(getApplicationContext(),
+	                    "Sorry! Your device doesn't support camera",
+	                    Toast.LENGTH_LONG).show();
+			}else{
+				buttonLoadImage.setVisibility(View.GONE);
+				captureImage();
 			}
-		});
+		}else{
+			
+	        buttonLoadImage.setOnClickListener(new View.OnClickListener() {
+				
+				@Override
+				public void onClick(View arg0) {
+					startUpdates();
+					
+					Intent i = new Intent(
+							Intent.ACTION_PICK,
+							android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+					
+					startActivityForResult(i, RESULT_LOAD_IMAGE);
+				}
+			});
+		}
 	}
 	
 	/**
@@ -182,6 +205,93 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 
+	}
+	
+	private void captureImage() {
+	    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+	 
+	    fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
+	 
+	    intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+	 
+	    // start the image capture Intent
+	    startActivityForResult(intent, CAMERA_CAPTURE_IMAGE_REQUEST_CODE);
+	}
+	
+	/**
+	 * Here we store the file url as it will be null after returning from camera
+	 * app
+	 */
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+	    super.onSaveInstanceState(outState);
+	 
+	    // save file url in bundle as it will be null on scren orientation
+	    // changes
+	    outState.putParcelable("file_uri", fileUri);
+	}
+	 
+	/*
+	 * Here we restore the fileUri again
+	 */
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+	    super.onRestoreInstanceState(savedInstanceState);
+	 
+	    // get the file url
+	    fileUri = savedInstanceState.getParcelable("file_uri");
+	}
+	
+	public Uri getOutputMediaFileUri(int type) {
+	    return Uri.fromFile(getOutputMediaFile(type));
+	}
+	
+	/**
+     * Checking device has camera hardware or not
+     * */
+    private boolean isDeviceSupportCamera() {
+        if (getApplicationContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_CAMERA)) {
+            // this device has a camera
+            return true;
+        } else {
+            // no camera on this device
+            return false;
+        }
+    }
+	 
+	/*
+	 * returning image / video
+	 */
+	private static File getOutputMediaFile(int type) {
+	 
+	    // External sdcard location
+	    File mediaStorageDir = new File(
+	            Environment
+	                    .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+	            IMAGE_DIRECTORY_NAME);
+	 
+	    // Create the storage directory if it does not exist
+	    if (!mediaStorageDir.exists()) {
+	        if (!mediaStorageDir.mkdirs()) {
+	            Log.d(IMAGE_DIRECTORY_NAME, "Oops! Failed create "
+	                    + IMAGE_DIRECTORY_NAME + " directory");
+	            return null;
+	        }
+	    }
+	 
+	    // Create a media file name
+	    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss",
+	            Locale.getDefault()).format(new Date());
+	    File mediaFile;
+	    if (type == MEDIA_TYPE_IMAGE) {
+	        mediaFile = new File(mediaStorageDir.getPath() + File.separator
+	                + "IMG_" + timeStamp + ".jpg");
+	    } else {
+	        return null;
+	    }
+	 
+	    return mediaFile;
 	}
 
 	@Override
@@ -289,6 +399,54 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		// Choose what to do based on the request code
 		switch (requestCode) {
 		
+		case CAMERA_CAPTURE_IMAGE_REQUEST_CODE:
+			if (resultCode == RESULT_OK) {
+                // successfully captured the image
+                // display it in image view
+//                previewCapturedImage();
+				String picturePath = fileUri.getPath();
+				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
+				BitmapFactory.Options options = new BitmapFactory.Options();
+				 
+	            // downsizing image as it throws OutOfMemory Exception for larger
+	            // images
+	            options.inSampleSize = 8;
+	 
+	            final Bitmap bitmap = BitmapFactory.decodeFile(fileUri.getPath(),
+	                    options);
+	 
+	            mImageView.setImageBitmap(bitmap);
+//				int targetW = mImageView.getWidth();
+//				int targetH = mImageView.getHeight();
+//				BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+//				bmOptions.inJustDecodeBounds = true;
+//			    BitmapFactory.decodeFile(picturePath, bmOptions);
+//			    int photoW = bmOptions.outWidth;
+//			    int photoH = bmOptions.outHeight;
+//			    int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+//
+//			    // Decode the image file into a Bitmap sized to fill the View
+//			    bmOptions.inJustDecodeBounds = false;
+//			    bmOptions.inSampleSize = scaleFactor;
+//			    bmOptions.inPurgeable = true;
+//
+//			    Bitmap bitmap = BitmapFactory.decodeFile(picturePath, bmOptions);
+//			    mImageView.setImageBitmap(bitmap);
+			    picture_path = picturePath;
+			    
+            } else if (resultCode == RESULT_CANCELED) {
+                // user cancelled Image capture
+                Toast.makeText(getApplicationContext(),
+                        "User cancelled image capture", Toast.LENGTH_SHORT)
+                        .show();
+            } else {
+                // failed to capture image
+                Toast.makeText(getApplicationContext(),
+                        "Sorry! Failed to capture image", Toast.LENGTH_SHORT)
+                        .show();
+            }
+			break;
+			
 		case RESULT_LOAD_IMAGE:
 			super.onActivityResult(requestCode, resultCode, intent);
 			if (resultCode == RESULT_OK && null != intent) {

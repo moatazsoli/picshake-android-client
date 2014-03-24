@@ -908,21 +908,27 @@ AccelerometerListener {
 		// Execute DownloadImage AsyncTask
 		try {
 			final List<String> x = new GetImageUrls().execute(URL).get();
-			new AlertDialog.Builder(this)
-		    .setTitle("Getting images")
-		    .setMessage("Are you sure you want to download all"+ x.size() + "images?")
-		    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-		        @SuppressWarnings("unchecked")
-				public void onClick(DialogInterface dialog, int which) { 
-		            new DownloadImages().execute(x);
-		        }
-		     })
-		    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-		        public void onClick(DialogInterface dialog, int which) { 
-		            // do nothing
-		        }
-		     })
-		     .show();
+			if(x != null)
+			{
+				new AlertDialog.Builder(this)
+			    .setTitle("Getting images")
+			    .setMessage("Are you sure you want to download all"+ x.size() + "images?")
+			    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+			        @SuppressWarnings("unchecked")
+					public void onClick(DialogInterface dialog, int which) { 
+			            new DownloadImages().execute(x);
+			        }
+			     })
+			    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+			        public void onClick(DialogInterface dialog, int which) { 
+			            // do nothing
+			        }
+			     })
+			     .show();
+			}else{
+				Toast.makeText(getBaseContext(), "No pic found", 
+											Toast.LENGTH_LONG).show();
+			}
 			
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -1083,7 +1089,7 @@ AccelerometerListener {
 				
 				String root = Environment.getExternalStorageDirectory().toString();
 				System.out.println("ROOOT" + root);
-				File myDir = new File("/storage/emulated/0/DCIM/Camera/");    
+				File myDir = new File(root + "/Download/");    
 				myDir.mkdirs();
 				Random generator = new Random();
 				int n = 10000;
@@ -1095,10 +1101,12 @@ AccelerometerListener {
 					FileOutputStream out = new FileOutputStream(file);
 					//TODO: the following should be fixed to account for JPEG and PNG
 					// and store them in that format. Also clean other TODOs.
+					
+					new SingleMediaScanner(ReceiverActivity.this, file);
 					bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
 					out.flush();
 					out.close();
-					sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://"+ Environment.getExternalStorageDirectory())));
+					//sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://"+ Environment.getExternalStorageDirectory())));
 				} catch (Exception e) {
 					e.printStackTrace();
 					return null;

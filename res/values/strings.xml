@@ -6,7 +6,7 @@
     <string name="hello_world">Hello world!</string>
 
     <!-- Main Activity Buttons -->
-    <string name="send_button">Send</string>
+    <string name="send_button">Add from Existing</string>
     <string name="receive_button">Receive</string>
     <string name="title_activity_sender">SenderActivity</string>
 

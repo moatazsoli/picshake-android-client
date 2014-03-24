@@ -25,6 +25,15 @@ public class MainActivity extends Activity {
 	/** Called when the user clicks the Send button */
 	public void sendActivity(View view) {
 	    Intent intent = new Intent(this, SenderActivity.class);
+	    intent.putExtra("selectOrCamera", 0); //camera or select
+	    // 0 is select , 1 is camera
+	    startActivity(intent);
+	}
+	
+	public void takepic(View view) {
+	    Intent intent = new Intent(this, SenderActivity.class);
+	    intent.putExtra("selectOrCamera", 1); //camera or select
+	    // 0 is select , 1 is camera
 	    startActivity(intent);
 	}
 	
@@ -32,6 +41,8 @@ public class MainActivity extends Activity {
 	    Intent intent = new Intent(this, ReceiverActivity.class);
 	    startActivity(intent);
 	}
+	
+	
 	
 	
 	
