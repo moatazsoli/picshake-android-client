@@ -125,7 +125,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
                  }
             	
                 dialog = ProgressDialog.show(SenderActivity.this, "", "Uploading file...", true);
-                stopUpdates();
+//                stopUpdates();
                 new Thread(new Runnable() {
                         public void run() {
                           
@@ -168,7 +168,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		 * handle callbacks.
 		 */
 		mLocationClient = new LocationClient(this, this, this);
-		
+		startUpdates();
         
         if(selectOrCamera == 1)
 		{
@@ -186,7 +186,6 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 				
 				@Override
 				public void onClick(View arg0) {
-					startUpdates();
 					
 					Intent i = new Intent(
 							Intent.ACTION_PICK,

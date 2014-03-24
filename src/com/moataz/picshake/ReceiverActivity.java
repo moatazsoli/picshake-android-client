@@ -1083,6 +1083,8 @@ AccelerometerListener {
 					// Decode Bitmap
 					bitmap = BitmapFactory.decodeStream(input);
 				} catch (Exception e) {
+					Toast.makeText(ReceiverActivity.this, "ERROR while downloading!!", 
+							Toast.LENGTH_SHORT).show();
 					e.printStackTrace();
 					return null;
 				}
