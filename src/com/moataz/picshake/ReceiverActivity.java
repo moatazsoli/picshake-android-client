@@ -906,6 +906,8 @@ AccelerometerListener {
 		//		Toast.makeText(getBaseContext(), "Motion detected", 
 		//				Toast.LENGTH_SHORT).show();
 		// Execute DownloadImage AsyncTask
+		if(!passcode.getText().toString().equals(""))
+		{
 		try {
 			final List<String> x = new GetImageUrls().execute(URL).get();
 			if(x != null)
@@ -936,6 +938,10 @@ AccelerometerListener {
 		} catch (ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		}else{
+			Toast.makeText(getBaseContext(), "Please Enter a Passcode", 
+					Toast.LENGTH_SHORT).show();
 		}
 
 	}

@@ -443,6 +443,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
                 Toast.makeText(getApplicationContext(),
                         "User cancelled image capture", Toast.LENGTH_SHORT)
                         .show();
+                this.finish();
             } else {
                 // failed to capture image
                 Toast.makeText(getApplicationContext(),
