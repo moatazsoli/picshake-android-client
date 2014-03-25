@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Menu;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 public class MainActivity extends Activity {
 
@@ -145,22 +147,73 @@ public class MainActivity extends Activity {
 	
 	/** Called when the user clicks the Send button */
 	public void sendActivity(View view) {
-	    Intent intent = new Intent(this, SenderActivity.class);
-	    intent.putExtra("selectOrCamera", 0); //camera or select
-	    // 0 is select , 1 is camera
-	    startActivity(intent);
+		Animation vanish =AnimationUtils.loadAnimation(this,R.anim.vanish);
+	    vanish.setAnimationListener(new Animation.AnimationListener() {
+			@Override
+			public void onAnimationStart(Animation animation) {
+				// Do nothing
+			}
+			
+			@Override
+			public void onAnimationRepeat(Animation animation) {
+				// Do nothing
+			}
+			
+			@Override
+			public void onAnimationEnd(Animation animation) {
+				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
+			    intent.putExtra("selectOrCamera", 0); //camera or select
+			    // 0 is select , 1 is camera
+			    startActivity(intent);
+			}
+		});
+	    view.startAnimation(vanish);
 	}
 	
-	public void takepic(View view) {
-	    Intent intent = new Intent(this, SenderActivity.class);
-	    intent.putExtra("selectOrCamera", 1); //camera or select
-	    // 0 is select , 1 is camera
-	    startActivity(intent);
+	public void takePic(View view) {
+		Animation vanish =AnimationUtils.loadAnimation(this,R.anim.vanish);
+	    vanish.setAnimationListener(new Animation.AnimationListener() {
+			@Override
+			public void onAnimationStart(Animation animation) {
+				// Do nothing
+			}
+			
+			@Override
+			public void onAnimationRepeat(Animation animation) {
+				// Do nothing
+			}
+			
+			@Override
+			public void onAnimationEnd(Animation animation) {
+				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
+			    intent.putExtra("selectOrCamera", 1); //camera or select
+			     //0 is select , 1 is camera
+			    startActivity(intent);	
+			}
+		});
+	    view.startAnimation(vanish);
 	}
 	
 	public void receiveActivity(View view) {
-	    Intent intent = new Intent(this, ReceiverActivity.class);
-	    startActivity(intent);
+		Animation vanish =AnimationUtils.loadAnimation(this,R.anim.vanish);
+	    vanish.setAnimationListener(new Animation.AnimationListener() {
+			@Override
+			public void onAnimationStart(Animation animation) {
+				// Do nothing
+			}
+			
+			@Override
+			public void onAnimationRepeat(Animation animation) {
+				// Do nothing
+			}
+			
+			@Override
+			public void onAnimationEnd(Animation animation) {
+			    Intent intent = new Intent(MainActivity.this, ReceiverActivity.class);
+			    startActivity(intent);
+			}
+		});
+	    view.startAnimation(vanish);
 	}
 	
 	
