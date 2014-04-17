@@ -1,13 +1,14 @@
 package com.moataz.picshake;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -19,12 +20,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.ByteArrayBody;
-import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
@@ -41,10 +37,8 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.location.Location;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -78,6 +72,9 @@ AccelerometerListener {
 	private LocationRequest mLocationRequest;
 	public final static int RESULT_LOAD_IMAGE = 5000;
 	public final static String NO_IMAGE_FOUND = "5002";
+	
+	// Progress dialog type (0 - for Horizontal progress bar)
+    public static final int progress_bar_type = 0; 
 
 	private TextView messageText;
 	private Button uploadButton;
@@ -807,93 +804,6 @@ AccelerometerListener {
 		}
 	}
 	
-	public int uploadFile() {
-
-		try {
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpGet getRequest = new HttpGet();
-			try {
-				getRequest.setURI(new URI("http://hezzapp.appspot.com/getuploadurl"));
-			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			HttpResponse getresponse = httpClient.execute(getRequest);
-			serverResponseCode = getresponse.getStatusLine().getStatusCode();
-			BufferedReader reader1 = new BufferedReader(new InputStreamReader(
-					getresponse.getEntity().getContent(), "UTF-8"));
-			String sResponse1;
-			StringBuilder s1 = new StringBuilder();
-
-			while ((sResponse1 = reader1.readLine()) != null) {
-				s1 = s1.append(sResponse1);
-			}
-			if(serverResponseCode == 200){
-
-				runOnUiThread(new Runnable() {
-					public void run() {
-						String msg = "Got URL";
-
-						messageText.setText(msg);
-						Toast.makeText(ReceiverActivity.this, "GOT URL!!", 
-								Toast.LENGTH_SHORT).show();
-					}
-				});                
-			}   
-
-
-
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			bm.compress(CompressFormat.JPEG, 75, bos);
-			byte[] data = bos.toByteArray();
-			HttpPost postRequest = new HttpPost(s1.toString());
-			//    "http://hezzapp.appspot.com/_ah/upload/AMmfu6ZVSlpuF4VCQyW6D-SytsfCEC79yyS66YRi5aZApJmmVtFn1sL8xHgCiv5SDeuUB4h0VHW28ehwedWGnKAf2QfbQBlt9wMqhBvt9yR4Q12ovqrwgC0/ALBNUaYAAAAAUvrywvX7Sb3dDVb_oI77Wqyt5qUUoIoY/");
-			ByteArrayBody bab = new ByteArrayBody(data, "image/jpeg","testimage.jpg");
-			// File file= new File("/mnt/sdcard/forest.png");
-			// FileBody bin = new FileBody(file);
-			MultipartEntity reqEntity = new MultipartEntity(
-					HttpMultipartMode.BROWSER_COMPATIBLE);
-			
-			// CHECK FOR EMPTY STRINGS LATER
-			reqEntity.addPart("uploaded_file", bab);
-			reqEntity.addPart("passcode", new StringBody(passcode.getText().toString()));
-			reqEntity.addPart("longitude", new StringBody(getLng()));
-			reqEntity.addPart("latitude", new StringBody(getLat()));
-			postRequest.setEntity(reqEntity);
-			HttpResponse response = httpClient.execute(postRequest);
-			serverResponseCode = response.getStatusLine().getStatusCode();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					response.getEntity().getContent(), "UTF-8"));
-			String sResponse;
-			StringBuilder s = new StringBuilder();
-
-			while ((sResponse = reader.readLine()) != null) {
-				s = s.append(sResponse);
-			}
-			System.out.println("Response:" + s);
-
-			if(serverResponseCode == 200){
-
-				runOnUiThread(new Runnable() {
-					public void run() {
-
-						String msg = "File Upload Completed";
-
-						messageText.setText(msg);
-						Toast.makeText(ReceiverActivity.this, "File Upload Complete.", 
-								Toast.LENGTH_SHORT).show();
-					}
-				});                
-			}    
-
-		} catch (Exception e) {
-			// handle exception here
-			Log.e(e.getClass().getName(), e.getMessage());
-		}
-
-		dialog.dismiss();       
-		return serverResponseCode; 
-	}
 	
 	// ######## Shake API
 	public void onAccelerationChanged(float x, float y, float z) {
@@ -945,8 +855,6 @@ AccelerometerListener {
 		}
 
 	}
-
-
 
 	@Override
 	public void onDestroy() {
@@ -1057,15 +965,19 @@ AccelerometerListener {
 		}
 	}
 	
-	private class DownloadImages extends AsyncTask<List<String>, Void, Integer> {
+	private class DownloadImages extends AsyncTask<List<String>, String, Integer> {
 
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
 			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
-			mProgressDialog.setTitle("Download Image");
-			mProgressDialog.setMessage("Downloading...");
+			mProgressDialog.setMessage("Downloading file. Please wait...");
 			mProgressDialog.setIndeterminate(false);
+			mProgressDialog.setMax(100);
+			mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			mProgressDialog.setCanceledOnTouchOutside(false);
+			//later on allow user to cancel and set the button callback to cancel and exit the download process
+			//mProgressDialog.setCancelable(true);
 			mProgressDialog.show();
 		}
 
@@ -1074,56 +986,74 @@ AccelerometerListener {
 			List<String> items = list[0];
 			String imageURL = "";
 			Bitmap bitmap;
-			if(items.size()==0)
-			{
+			if (items.size() == 0) {
 				return null;
 			}
-			for (Iterator iterator = items.iterator(); iterator.hasNext();) 
-			{
+			String filepath = "";
+			for (Iterator iterator = items.iterator(); iterator.hasNext();) {
 				imageURL = (String) iterator.next();
 
-				bitmap = null;
 				try {
-					// Download Image from URL
-					InputStream input = new java.net.URL(imageURL).openStream();
-					// Decode Bitmap
-					bitmap = BitmapFactory.decodeStream(input);
-				} catch (Exception e) {
-					Toast.makeText(ReceiverActivity.this, "ERROR while downloading!!", 
-							Toast.LENGTH_SHORT).show();
-					e.printStackTrace();
-					return null;
-				}
-				
-				String root = Environment.getExternalStorageDirectory().toString();
-				System.out.println("ROOOT" + root);
-				File myDir = new File(root + "/Download/");    
-				myDir.mkdirs();
-				Random generator = new Random();
-				int n = 10000;
-				n = generator.nextInt(n);
-				String fname = "MYImage-"+ n +".jpg";
-				File file = new File (myDir, fname);
-				if (file.exists ()) file.delete (); 
-				try {
-					FileOutputStream out = new FileOutputStream(file);
-					//TODO: the following should be fixed to account for JPEG and PNG
-					// and store them in that format. Also clean other TODOs.
-					
+					URL url = new URL(imageURL);
+					HttpURLConnection urlConnection = (HttpURLConnection) url
+							.openConnection();
+					urlConnection.setRequestMethod("GET");
+//					urlConnection.setDoOutput(true);
+					urlConnection.connect();
+
+					String root = Environment.getExternalStorageDirectory()
+							.toString();
+					System.out.println("ROOOT" + root);
+					File myDir = new File(root + "/Download/");
+					myDir.mkdirs();
+					Random generator = new Random();
+					int n = 10000;
+					n = generator.nextInt(n);
+					String fname = "MYImage-" + n + ".jpg";
+					File file = new File(myDir, fname);
+					if (file.exists())
+						file.delete();
+
+					FileOutputStream fileOutput = new FileOutputStream(file);
+					InputStream inputStream = urlConnection.getInputStream();
+					long totalSize = urlConnection.getContentLength();
+					long downloadedSize = 0;
+					byte[] buffer = new byte[1024];
+					int bufferLength = 0;
+					while ((bufferLength = inputStream.read(buffer)) > 0) {
+						fileOutput.write(buffer, 0, bufferLength);
+						downloadedSize += bufferLength;
+						Log.i("Progress:", "downloadedSize:" + downloadedSize
+								+ "totalSize:" + totalSize);
+						publishProgress(""+(int)((downloadedSize*100)/totalSize));
+					}
+					fileOutput.close();
 					new SingleMediaScanner(ReceiverActivity.this, file);
-					bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-					out.flush();
-					out.close();
-					//sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://"+ Environment.getExternalStorageDirectory())));
-				} catch (Exception e) {
+					if (downloadedSize == totalSize)
+						filepath = file.getPath();
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+					return null;
+				} catch (IOException e) {
+					filepath = null;
 					e.printStackTrace();
 					return null;
 				}
+				Log.i("filepath:", " " + filepath);
 			}
-			//fix this return
+
+			// fix this return
 			return 1;
 		}
 
+		/**
+         * Updating progress bar
+         * */
+        protected void onProgressUpdate(String... progress) {
+            // setting progress percentage
+        	mProgressDialog.setProgress(Integer.parseInt(progress[0]));
+       }
+        
 		@Override
 		protected void onPostExecute(Integer result) {
 			// Set the bitmap into ImageView
@@ -1131,8 +1061,8 @@ AccelerometerListener {
 			mProgressDialog.dismiss();
 			if(result == null)
 			{
-				String root = Environment.getExternalStorageDirectory().toString();
-				System.out.println("ROOOT" + root);
+				//String root = Environment.getExternalStorageDirectory().toString();
+				//System.out.println("ROOOT" + root);
 				passcode.setText("");
 				runOnUiThread(new Runnable() {
 					public void run() {
@@ -1144,6 +1074,7 @@ AccelerometerListener {
 			
 		}
 	}
-
+	
+	
 
 }

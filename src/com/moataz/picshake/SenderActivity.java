@@ -58,6 +58,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.moataz.picshake.CustomMultiPartEntity.ProgressListener;
 
 public class SenderActivity extends FragmentActivity implements
 LocationListener,
@@ -76,7 +77,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     private ProgressDialog dialog = null;
     private Bitmap bm;
     private String picture_path = null; 
-    
+    private ProgressDialog mProgressDialog;
 	
 	// Stores the current instantiation of the location client in this object
 	private LocationClient mLocationClient;
@@ -124,15 +125,10 @@ GooglePlayServicesClient.OnConnectionFailedListener {
                      Log.e(e.getClass().getName(), e.getMessage());
                  }
             	
-                dialog = ProgressDialog.show(SenderActivity.this, "", "Uploading file...", true);
+               // dialog = ProgressDialog.show(SenderActivity.this, "", "Uploading file...", true);
 //                stopUpdates();
-                new Thread(new Runnable() {
-                        public void run() {
-                          
-                             new UploadImage().execute();
+                 new UploadImage().execute();
                                                      
-                        }
-                      }).start();        
                 }
             });
         
@@ -841,14 +837,30 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 			ByteArrayBody bab = new ByteArrayBody(data, "image/jpeg","testimage.jpg");
 			// File file= new File("/mnt/sdcard/forest.png");
 			// FileBody bin = new FileBody(file);
-			MultipartEntity reqEntity = new MultipartEntity(
-					HttpMultipartMode.BROWSER_COMPATIBLE);
 			
+//			MultipartEntity reqEntity = new MultipartEntity(
+//					HttpMultipartMode.BROWSER_COMPATIBLE);
+			final long totalSize= bab.getContentLength();
+			CustomMultiPartEntity reqEntity = new CustomMultiPartEntity(new ProgressListener()
+			{
+				@Override
+				public void transferred(final long num)
+				{
+					runOnUiThread(new Runnable() {
+						public void run() {
+							mProgressDialog.setProgress((int) ((num / (float) totalSize) * 100));
+						}
+					});                
+					//publishProgress((int) ((num / (float) totalSize) * 100));
+				}
+			});
 			// CHECK FOR EMPTY STRINGS LATER
+			
 			reqEntity.addPart("uploaded_file", bab);
 			reqEntity.addPart("passcode", new StringBody(passcode.getText().toString()));
 			reqEntity.addPart("longitude", new StringBody(getLng()));
 			reqEntity.addPart("latitude", new StringBody(getLat()));
+			
 			postRequest.setEntity(reqEntity);
 			HttpResponse response = httpClient.execute(postRequest);
 			serverResponseCode = response.getStatusLine().getStatusCode();
@@ -881,19 +893,45 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 			Log.e(e.getClass().getName(), e.getMessage());
 		}
 
-		dialog.dismiss();       
+		//dialog.dismiss();       
 		return serverResponseCode; 
 	}
 	
 	private class UploadImage extends AsyncTask<String, Void, String> {
+		
+		@Override
+		protected void onPreExecute() {
+			mProgressDialog = new ProgressDialog(SenderActivity.this);
+			mProgressDialog.setMessage("Uploading file. Please wait...");
+			mProgressDialog.setIndeterminate(false);
+			mProgressDialog.setMax(100);
+			mProgressDialog.setCanceledOnTouchOutside(false);
+			mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			//later on allow user to cancel and set the button callback to cancel and exit the download process
+			//mProgressDialog.setCancelable(true);
+			mProgressDialog.show();
+		}
 
 		@Override
 		protected String doInBackground(String... params) {
 			uploadFile();
 			return null;
 		}
+		/**
+         * Updating progress bar
+         * */
+        protected void onProgressUpdate(Integer... progress) {
+            // setting progress percentage
+        	mProgressDialog.setProgress((int) (progress[0]));
+       }
+        
+        public void updateMe()
+        {
+        	
+        }
 		@Override
 	    protected void onPostExecute(String result) {
+			mProgressDialog.dismiss();
 			if(serverResponseCode == 200){
 				passcode.setText("");
 				runOnUiThread(new Runnable() {
