@@ -169,6 +169,13 @@ containing a value of this type.
         public static final int zOrderOnTop=0x7f010010;
     }
     public static final class color {
+        public static final int BLACK=0x7f05000a;
+        public static final int WHITE=0x7f05000b;
+        public static final int aqua=0x7f05000f;
+        public static final int black=0x7f050012;
+        public static final int blue=0x7f050015;
+        public static final int blue_txt=0x7f05001d;
+        public static final int brown=0x7f05000d;
         public static final int common_action_bar_splitter=0x7f050009;
         /**  Sign-in Button Colors 
          */
@@ -181,8 +188,21 @@ containing a value of this type.
         public static final int common_signin_btn_light_text_disabled=0x7f050006;
         public static final int common_signin_btn_light_text_focused=0x7f050007;
         public static final int common_signin_btn_light_text_pressed=0x7f050005;
-        public static final int common_signin_btn_text_dark=0x7f05000a;
-        public static final int common_signin_btn_text_light=0x7f05000b;
+        public static final int common_signin_btn_text_dark=0x7f05001e;
+        public static final int common_signin_btn_text_light=0x7f05001f;
+        public static final int dark_grey=0x7f05000e;
+        public static final int dark_grey_bg=0x7f05001a;
+        public static final int grey=0x7f050019;
+        public static final int grid_bck=0x7f050018;
+        public static final int light_grey=0x7f05000c;
+        public static final int login_font_color_1=0x7f05001b;
+        public static final int login_font_color_2=0x7f05001c;
+        public static final int red_cherry=0x7f050010;
+        public static final int silver=0x7f050011;
+        public static final int spiritclips_bck=0x7f050016;
+        public static final int translucent_black=0x7f050017;
+        public static final int transparent=0x7f050013;
+        public static final int white=0x7f050014;
     }
     public static final class dimen {
         /**  Default screen margins, per the Android Design guidelines. 
@@ -223,25 +243,26 @@ containing a value of this type.
         public static final int common_signin_btn_text_pressed_light=0x7f020019;
         public static final int download=0x7f02001a;
         public static final int foldercamera=0x7f02001b;
-        public static final int ic_launcher1=0x7f02001c;
-        public static final int ic_launcherorange=0x7f02001d;
-        public static final int ic_plusone_medium_off_client=0x7f02001e;
-        public static final int ic_plusone_small_off_client=0x7f02001f;
-        public static final int ic_plusone_standard_off_client=0x7f020020;
-        public static final int ic_plusone_tall_off_client=0x7f020021;
-        public static final int roundshapebtn=0x7f020022;
-        public static final int watermark=0x7f020023;
+        public static final int greencheckmark=0x7f02001c;
+        public static final int ic_launcher1=0x7f02001d;
+        public static final int ic_launcherorange=0x7f02001e;
+        public static final int ic_plusone_medium_off_client=0x7f02001f;
+        public static final int ic_plusone_small_off_client=0x7f020020;
+        public static final int ic_plusone_standard_off_client=0x7f020021;
+        public static final int ic_plusone_tall_off_client=0x7f020022;
+        public static final int roundshapebtn=0x7f020023;
+        public static final int watermark=0x7f020024;
     }
     public static final class id {
         public static final int LinearLayout1=0x7f060008;
         public static final int action_settings=0x7f060010;
+        public static final int gridView1=0x7f06000b;
         public static final int hybrid=0x7f060004;
         public static final int imgView=0x7f06000c;
-        public static final int imgView_recv=0x7f060009;
         public static final int none=0x7f060000;
         public static final int normal=0x7f060001;
         public static final int passcode=0x7f06000e;
-        public static final int passcode_recv=0x7f06000b;
+        public static final int passcode_recv=0x7f06000a;
         public static final int receiveActivityButton=0x7f060005;
         public static final int satellite=0x7f060002;
         public static final int select_pic=0x7f06000d;
@@ -249,7 +270,7 @@ containing a value of this type.
         public static final int send_button=0x7f06000f;
         public static final int takePicButton=0x7f060006;
         public static final int terrain=0x7f060003;
-        public static final int textView1=0x7f06000a;
+        public static final int textView1=0x7f060009;
     }
     public static final class integer {
         public static final int google_play_services_version=0x7f080000;

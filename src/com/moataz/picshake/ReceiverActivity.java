@@ -11,9 +11,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.http.HttpResponse;
@@ -23,6 +25,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -36,21 +39,31 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.Checkable;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -73,6 +86,11 @@ AccelerometerListener {
 	public final static int RESULT_LOAD_IMAGE = 5000;
 	public final static String NO_IMAGE_FOUND = "5002";
 	
+	public List<String> imgUrlsList;
+	
+	//selection checkmark
+	Bitmap checkmarkBitmap;
+	Drawable checkmarkDrawable;
 	// Progress dialog type (0 - for Horizontal progress bar)
     public static final int progress_bar_type = 0; 
 
@@ -83,13 +101,19 @@ AccelerometerListener {
     private Bitmap bm;
     private String picture_path = null; 
     private String URL = "";
-    private ImageView image;
     private TextView text;
     private ProgressDialog mProgressDialog;
-    
-	
+    private ProgressDialog pProgressDialog;
+    private GridView mGrid;
+    private List<ResolveInfo> mApps;
+    HashMap<String, Object> y;
+    ArrayList<HashMap<String, Object>> imagesTemp;
+    HashMap<Integer, String> selectedPositions;
+    Bitmap imgBitmapTemp;
 	// Stores the current instantiation of the location client in this object
 	private LocationClient mLocationClient;
+	
+	ArrayList<HashMap<String, Object>> thumbnailsMap;
 
 	// Handles to UI widgets
 	private TextView mLatLng;
@@ -97,7 +121,7 @@ AccelerometerListener {
 //	private ProgressBar mActivityIndicator;
 	private TextView mConnectionState;
 	private TextView mConnectionStatus;
-	
+	private TextView textView1;
 	private EditText passcode;
 
 	// Handle to SharedPreferences for this app
@@ -123,10 +147,17 @@ AccelerometerListener {
 		setContentView(R.layout.activity_receiver);
 		// Show the Up button in the action bar.
 		setupActionBar();
+		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark)).getBitmap();
+		checkmarkDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(checkmarkBitmap, 150, 150, false));
 		
+		//setting up and hiding the GridView
+		mGrid = (GridView) findViewById(R.id.gridView1);
+		textView1 = (TextView) findViewById(R.id.textView1);
+		mGrid.setVisibility(View.GONE);
+		
+		imgUrlsList = new ArrayList<String>();
 		// Upload stuff
         passcode = (EditText)findViewById(R.id.passcode_recv);
-        image = (ImageView) findViewById(R.id.imgView_recv);
 		//***
 		
 		// Get handles to the UI view objects
@@ -163,6 +194,154 @@ AccelerometerListener {
 		mLocationClient = new LocationClient(this, this, this);
 		
 	}
+	
+	// #######################################################################
+	// Thumbnails Grid
+	// #######################################################################
+	public void viewThumbnails() {
+
+	    passcode.setVisibility(View.GONE);
+		textView1.setVisibility(View.GONE);
+		mGrid.setVisibility(View.VISIBLE);
+		//loadApps();
+		mGrid.setAdapter(new ThumbnailsAdapter());
+		mGrid.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
+		mGrid.setMultiChoiceModeListener(new MultiChoiceModeListener());
+	}
+
+//	private void loadApps() {
+//		Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+//		mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+//
+//		mApps = getPackageManager().queryIntentActivities(mainIntent, 0);
+//	}
+
+	public class MultiChoiceModeListener implements
+			GridView.MultiChoiceModeListener {
+		public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+			mode.setTitle("Select Items");
+			mode.setSubtitle("One item selected");
+			return true;
+		}
+
+		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+			return true;
+		}
+
+		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+			return true;
+		}
+
+		@SuppressWarnings("unchecked")
+		public void onDestroyActionMode(ActionMode mode) {
+			if(mGrid.getCheckedItemCount()>0)
+			{
+				//user has selected some items
+				Toast.makeText(getBaseContext(), selectedPositions.toString(), 
+						Toast.LENGTH_LONG).show();
+				//TODO add warning regarding sizes , maybe > 5 Mbs
+				new DownloadImages().execute(selectedPositions.keySet());
+			}
+		}
+
+		public void onItemCheckedStateChanged(ActionMode mode, int position,
+				long id, boolean checked) {
+			int selectCount = mGrid.getCheckedItemCount();
+			switch (selectCount) {
+			case 1:
+				selectedPositions.clear();
+				mode.setSubtitle("One item selected");
+				break;
+			default:
+				mode.setSubtitle("" + selectCount + " items selected");
+				break;
+			}
+			if (checked) {
+				selectedPositions.put(position, "");
+			} else {
+				selectedPositions.remove(position);
+			}
+
+		}
+
+	}
+
+	public class CheckableLayout extends FrameLayout implements Checkable {
+		private boolean mChecked;
+
+		public CheckableLayout(Context context) {
+			super(context);
+		}
+
+		@SuppressLint("NewApi")
+		public void setChecked(boolean checked) {
+			mChecked = checked;
+//			setBackground(checked ? getResources().getDrawable(R.color.blue)
+//					: null);
+			setForeground(checked ?
+					 checkmarkDrawable
+					 : null);
+		}
+
+		public boolean isChecked() {
+			return mChecked;
+		}
+
+		public void toggle() {
+			setChecked(!mChecked);
+		}
+
+	}
+
+	public class ThumbnailsAdapter extends BaseAdapter {
+		public ThumbnailsAdapter() {
+			selectedPositions = new HashMap<Integer, String>();
+		}
+
+		public View getView(int position, View convertView, ViewGroup parent) {
+			CheckableLayout l;
+			ImageView i;
+
+			if (convertView == null) {
+				i = new ImageView(ReceiverActivity.this);
+				i.setScaleType(ImageView.ScaleType.FIT_CENTER);
+				i.setLayoutParams(new ViewGroup.LayoutParams(150, 150));
+				l = new CheckableLayout(ReceiverActivity.this);
+				l.setLayoutParams(new GridView.LayoutParams(
+						GridView.LayoutParams.WRAP_CONTENT,
+						GridView.LayoutParams.WRAP_CONTENT));
+				l.addView(i);
+			} else {
+				l = (CheckableLayout) convertView;
+				i = (ImageView) l.getChildAt(0);
+			}
+
+			HashMap<String, Object> info = thumbnailsMap.get(position);
+			imgBitmapTemp = (Bitmap) info.get("img");
+			Drawable drawable = new BitmapDrawable(getResources(), imgBitmapTemp );
+				i.setImageDrawable(drawable);
+			return l;
+		}
+
+		public final int getCount() {
+			return thumbnailsMap.size();
+		}
+
+		public final Object getItem(int position) {
+			return thumbnailsMap.get(position);
+		}
+
+		public final long getItemId(int position) {
+			return position;
+		}
+	}
+	
+	
+	
+	
+	//#######################################################################
+	//  Thumbnails Grid End
+	//#######################################################################
 	
 	/**
 	 * Set up the {@link android.app.ActionBar}.
@@ -567,6 +746,59 @@ AccelerometerListener {
 		return null;
 	}
 	
+	public static HashMap<String, Object> getItemsMapFromJsonReply(String aInStr)
+	{
+		 // images JSONArray
+	    JSONArray images = null;
+	    int totalSize = 0;
+	    ArrayList<HashMap<String, Object>> imageList = new ArrayList<HashMap<String, Object>>();
+	    HashMap<String,Object> return_val = new HashMap<String, Object>();
+	    
+	    JSONObject jsonObj;
+	    if (aInStr != null) {
+	    	try {
+	    		jsonObj = new JSONObject(aInStr);
+	    		if(jsonObj.has("list") && jsonObj.has("total_size"))
+	    		{
+	    			totalSize = jsonObj.getInt("total_size");
+	    			images = jsonObj.getJSONArray("list");
+	    			
+	    			// looping through All Contacts
+                    for (int i = 0; i < images.length(); i++) {
+                        JSONObject c = images.getJSONObject(i);
+                         
+                        int no = c.getInt("no");
+                        int size = c.getInt("size");
+                        String url = c.getString("url");
+                        String thumb = c.getString("thumb");
+ 
+                        // tmp hashmap for single contact
+                        HashMap<String, Object> image = new HashMap<String, Object>();
+ 
+                        // adding each child node to HashMap key => value
+                        image.put("no", no);
+                        image.put("size", size);
+                        image.put("url", url);
+                        image.put("thumb", thumb);
+ 
+                        // adding contact to contact list
+                        imageList.add(image);
+                    }
+                    
+	    			
+                    return_val.put("list", imageList);
+                    return_val.put("total_size", totalSize);
+                    return_val.put("counter", images.length());
+                    return return_val;
+	    		}
+	    	} catch (JSONException e) {
+	    		e.printStackTrace();
+	    	}
+	    }
+		
+		return null;
+	}
+	
 	public static int getCounterFromJsonReply(String aInStr)
 	{
 		JSONObject jsonObj;
@@ -810,47 +1042,20 @@ AccelerometerListener {
 		// TODO Auto-generated method stub
 
 	}
+	@SuppressWarnings("unchecked")
 	public void onShake(float force) {
 
 		// Called when Motion Detected
 		//		Toast.makeText(getBaseContext(), "Motion detected", 
 		//				Toast.LENGTH_SHORT).show();
-		// Execute DownloadImage AsyncTask
-		if(!passcode.getText().toString().equals(""))
-		{
-		try {
-			final List<String> x = new GetImageUrls().execute(URL).get();
-			if(x != null)
-			{
-				new AlertDialog.Builder(this)
-			    .setTitle("Getting images")
-			    .setMessage("Are you sure you want to download all"+ x.size() + "images?")
-			    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-			        @SuppressWarnings("unchecked")
-					public void onClick(DialogInterface dialog, int which) { 
-			            new DownloadImages().execute(x);
-			        }
-			     })
-			    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-			        public void onClick(DialogInterface dialog, int which) { 
-			            // do nothing
-			        }
-			     })
-			     .show();
-			}else{
-				Toast.makeText(getBaseContext(), "No pic found", 
-											Toast.LENGTH_LONG).show();
-			}
-			
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		}else{
-			Toast.makeText(getBaseContext(), "Please Enter a Passcode", 
+		if (!passcode.getText().toString().equals("")) {
+//			Toast.makeText(getBaseContext(),
+//					"Previewing Images... Please wait", Toast.LENGTH_LONG)
+//					.show();
+			new GetImageUrls().execute(URL);
+			// STEP 1 : getting URLS and info
+		} else {
+			Toast.makeText(getBaseContext(), "Please Enter a Passcode",
 					Toast.LENGTH_SHORT).show();
 		}
 
@@ -873,29 +1078,25 @@ AccelerometerListener {
 
 	}
 
-	private class GetImageUrls extends AsyncTask<String, Void, List<String>> {
+	private class GetImageUrls extends AsyncTask<String, Void, HashMap<String, Object>> {
 
+		private boolean error;
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
-			// Create a progressdialog
+			error = false;
 			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
-			// Set progressdialog title
 			mProgressDialog.setTitle("Getting Images");
-			// Set progressdialog message
 			mProgressDialog.setMessage("Loading...");
 			mProgressDialog.setIndeterminate(false);
-			// Show progressdialog
 			mProgressDialog.show();
 		}
 
 		@Override
-		protected List<String> doInBackground(String... URL) {
+		protected HashMap<String, Object> doInBackground(String... URL) {	
 
-			HttpClient httpClient = new DefaultHttpClient();
 			String myURL = "https://hezzapp.appspot.com/getpic";
-//			String url = "https://server.com/stuff"
-					
+			
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
 			nameValuePairs.add(new BasicNameValuePair("passcode", passcode.getText().toString()));
 			nameValuePairs.add(new BasicNameValuePair("latitude", getLat()));
@@ -920,13 +1121,14 @@ AccelerometerListener {
 				{
 					return null;
 				}
-				//TODO ADd json stuff , check favorite Android JSON Parsing Tutorial
+				//JSON Parsing
 				strToParse = s1.toString();
 				
 				//downloadUrl = s1.toString();
 				System.out.println(downloadUrl);
 			} catch (Exception e) {
 				System.out.println(e.toString());
+				error = true;
 				Log.v("dd", "error");
 			}
 			
@@ -936,16 +1138,18 @@ AccelerometerListener {
 			}
 			String imageURL="";
 			String stringURL="";
-			List<String> items = getItemsFromJsonReply(strToParse);
-			if(items.size()==0)
-			{
-				return null;
-			}
-			return items;
+			HashMap<String,Object> returnedHashMap = getItemsMapFromJsonReply(strToParse);
+//			List<String> items = getItemsFromJsonReply(strToParse);
+//			if(items.size()==0)
+//			{
+//				return null;
+//			}
+			return returnedHashMap;
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
-		protected void onPostExecute(List<String> result) {
+		protected void onPostExecute(HashMap<String, Object> result) {
 			// Set the bitmap into ImageView
 //			image.setImageBitmap(result);
 			mProgressDialog.dismiss();
@@ -956,22 +1160,35 @@ AccelerometerListener {
 				passcode.setText("");
 				runOnUiThread(new Runnable() {
 					public void run() {
-						Toast.makeText(ReceiverActivity.this, "ERROR Or No Pic Found- fix me", 
-								Toast.LENGTH_SHORT).show();
+						if(error)
+						{
+							Toast.makeText(ReceiverActivity.this, "Error! While Getting pics", 
+									Toast.LENGTH_SHORT).show();
+						}else{
+							Toast.makeText(ReceiverActivity.this, "No Images Found", 
+									Toast.LENGTH_SHORT).show();
+						}
 					}
 				});
 				
+			}else{
+					// List<String> z;
+//					listVar.clear();
+					imagesTemp = (ArrayList<HashMap<String, Object>>) result.get("list");
+					new DownloadThumbnails()
+							.execute(imagesTemp);
+					
 			}
 		}
 	}
 	
-	private class DownloadImages extends AsyncTask<List<String>, String, Integer> {
+	private class DownloadImages extends AsyncTask<Set<Integer>, String, Integer> {
 
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
 			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
-			mProgressDialog.setMessage("Downloading file. Please wait...");
+			mProgressDialog.setMessage("Downloading Full Size Images. Please wait...");
 			mProgressDialog.setIndeterminate(false);
 			mProgressDialog.setMax(100);
 			mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -982,17 +1199,23 @@ AccelerometerListener {
 		}
 
 		@Override
-		protected Integer doInBackground(List<String>... list) {
-			List<String> items = list[0];
+		protected Integer doInBackground(Set<Integer>... list) {
+			
+			//TODO find a way to update the message in the Progress bar to indicate the # of pics downloaind
+			//TODO for example ( 1/3) (2/3) and so on.
+			Set<Integer> items = list[0];
 			String imageURL = "";
 			Bitmap bitmap;
+			HashMap<String, Object> tempMap;
 			if (items.size() == 0) {
 				return null;
 			}
 			String filepath = "";
 			for (Iterator iterator = items.iterator(); iterator.hasNext();) {
-				imageURL = (String) iterator.next();
-
+				tempMap = thumbnailsMap.get((Integer) iterator.next());
+				
+				imageURL = (String) tempMap.get("url");
+				// TODO check if imageURL is not NULL and do this for all iterators in project
 				try {
 					URL url = new URL(imageURL);
 					HttpURLConnection urlConnection = (HttpURLConnection) url
@@ -1003,7 +1226,7 @@ AccelerometerListener {
 
 					String root = Environment.getExternalStorageDirectory()
 							.toString();
-					System.out.println("ROOOT" + root);
+//					System.out.println("ROOOT" + root);
 					File myDir = new File(root + "/Download/");
 					myDir.mkdirs();
 					Random generator = new Random();
@@ -1016,8 +1239,9 @@ AccelerometerListener {
 
 					FileOutputStream fileOutput = new FileOutputStream(file);
 					InputStream inputStream = urlConnection.getInputStream();
-					long totalSize = urlConnection.getContentLength();
-					long downloadedSize = 0;
+//					long totalSize = urlConnection.getContentLength();
+					Integer totalSize = (Integer) tempMap.get("size");
+					int downloadedSize = 0;
 					byte[] buffer = new byte[1024];
 					int bufferLength = 0;
 					while ((bufferLength = inputStream.read(buffer)) > 0) {
@@ -1025,7 +1249,13 @@ AccelerometerListener {
 						downloadedSize += bufferLength;
 						Log.i("Progress:", "downloadedSize:" + downloadedSize
 								+ "totalSize:" + totalSize);
-						publishProgress(""+(int)((downloadedSize*100)/totalSize));
+						//sometimes size returned from server is smaller than actual size
+						if(downloadedSize <= totalSize)
+						{
+							publishProgress(""+(int)((downloadedSize*100)/totalSize));
+						}else{
+							publishProgress(""+100);
+						}
 					}
 					fileOutput.close();
 					new SingleMediaScanner(ReceiverActivity.this, file);
@@ -1041,6 +1271,8 @@ AccelerometerListener {
 				}
 				Log.i("filepath:", " " + filepath);
 			}
+			//TODO when all pics are downloaded, show Toast : Download complete or all pics are saved in gallery
+			//TODO then return to the landing main page.
 
 			// fix this return
 			return 1;
@@ -1070,6 +1302,94 @@ AccelerometerListener {
 								Toast.LENGTH_SHORT).show();
 					}
 				});
+			}
+			
+		}
+	}
+	
+	private class DownloadThumbnails extends AsyncTask<ArrayList<HashMap<String, Object>>, Void, ArrayList<HashMap<String, Object>>> {
+
+		
+		private HashMap<String, Object> temp;
+		ArrayList<HashMap<String, Object>> imageList;
+		private Bitmap bitmap;
+		private String thumbUrl;
+		
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			imageList = new ArrayList<HashMap<String, Object>>();
+			pProgressDialog = new ProgressDialog(ReceiverActivity.this);
+//			pProgressDialog.setTitle("Images Preview");
+			pProgressDialog.setMessage("Previewing Images...");
+			pProgressDialog.setIndeterminate(false);
+			pProgressDialog.show();
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		protected ArrayList<HashMap<String, Object>> doInBackground(ArrayList<HashMap<String, Object>>... list) {
+			ArrayList<HashMap<String, Object>> items = list[0];
+			
+			if(items.size()==0)
+			{
+				return null;
+			}
+			for (Iterator iterator = items.iterator(); iterator.hasNext();) 
+			{
+				temp =(HashMap<String, Object>) iterator.next();
+				if(temp.containsKey("thumb"))
+				{
+					thumbUrl = (String) temp.get("thumb");
+					bitmap = null;
+					try {
+						// Download Image from URL
+						InputStream input = new java.net.URL(thumbUrl).openStream();
+						// Decode Bitmap
+						bitmap = BitmapFactory.decodeStream(input);
+//						HashMap<String, Object> newHashMap = new HashMap<String, Object>();
+//						newHashMap.put("no", (Integer) temp.get("no"));
+//						newHashMap.put("img", bitmap);
+						// might raise performance issue, passing whole arraylist , bitmaps plus size and urls
+						//may be use separate array just mapping img to no "id".
+						temp.put("img", bitmap);
+						imageList.add(temp);
+					} catch (Exception e) {
+						Toast.makeText(ReceiverActivity.this, "ERROR while downloading Thumbnails!!", 
+								Toast.LENGTH_SHORT).show();
+						e.printStackTrace();
+						return null;
+					}
+				}
+				
+			}
+			//fix this return .. might have been already fixed
+			return imageList;
+		}
+
+		@Override
+		protected void onPostExecute(ArrayList<HashMap<String, Object>> result) {
+			// Set the bitmap into ImageView
+//			image.setImageBitmap(result);
+			pProgressDialog.dismiss();
+			thumbnailsMap = result;
+			if(result == null)
+			{
+				runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(ReceiverActivity.this, "ERROR!! Downloading thumbnails", 
+								Toast.LENGTH_SHORT).show();
+					}
+				});
+			}else{
+				if(thumbnailsMap.size()>0)
+				{
+					viewThumbnails(); // viewThumbnails
+				}else{
+					Toast.makeText(ReceiverActivity.this, "ERROR!! Viewing thumbnails", 
+							Toast.LENGTH_SHORT).show();
+				}
+				
 			}
 			
 		}
