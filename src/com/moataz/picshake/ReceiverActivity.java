@@ -147,7 +147,7 @@ AccelerometerListener {
 		setContentView(R.layout.activity_receiver);
 		// Show the Up button in the action bar.
 		setupActionBar();
-		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark)).getBitmap();
+		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark1)).getBitmap();
 		checkmarkDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(checkmarkBitmap, 150, 150, false));
 		
 		//setting up and hiding the GridView
@@ -203,18 +203,11 @@ AccelerometerListener {
 	    passcode.setVisibility(View.GONE);
 		textView1.setVisibility(View.GONE);
 		mGrid.setVisibility(View.VISIBLE);
-		//loadApps();
 		mGrid.setAdapter(new ThumbnailsAdapter());
 		mGrid.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
 		mGrid.setMultiChoiceModeListener(new MultiChoiceModeListener());
 	}
 
-//	private void loadApps() {
-//		Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-//		mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-//
-//		mApps = getPackageManager().queryIntentActivities(mainIntent, 0);
-//	}
 
 	public class MultiChoiceModeListener implements
 			GridView.MultiChoiceModeListener {
@@ -236,9 +229,6 @@ AccelerometerListener {
 		public void onDestroyActionMode(ActionMode mode) {
 			if(mGrid.getCheckedItemCount()>0)
 			{
-				//user has selected some items
-				Toast.makeText(getBaseContext(), selectedPositions.toString(), 
-						Toast.LENGTH_LONG).show();
 				//TODO add warning regarding sizes , maybe > 5 Mbs
 				new DownloadImages().execute(selectedPositions.keySet());
 			}
@@ -305,6 +295,8 @@ AccelerometerListener {
 			if (convertView == null) {
 				i = new ImageView(ReceiverActivity.this);
 				i.setScaleType(ImageView.ScaleType.FIT_CENTER);
+				i.setPadding(3, 3, 3, 3);
+				i.setVerticalFadingEdgeEnabled(true);
 				i.setLayoutParams(new ViewGroup.LayoutParams(150, 150));
 				l = new CheckableLayout(ReceiverActivity.this);
 				l.setLayoutParams(new GridView.LayoutParams(
@@ -667,7 +659,6 @@ AccelerometerListener {
 
 	/*
 	 * Called by Location Services when the request to connect the
-	 * client finishes successfully. At this point, you can
 	 * request the current location or start periodic updates
 	 */
 	@Override
@@ -1052,7 +1043,7 @@ AccelerometerListener {
 //			Toast.makeText(getBaseContext(),
 //					"Previewing Images... Please wait", Toast.LENGTH_LONG)
 //					.show();
-			new GetImageUrls().execute(URL);
+			new GetImageUrls().execute();
 			// STEP 1 : getting URLS and info
 		} else {
 			Toast.makeText(getBaseContext(), "Please Enter a Passcode",
@@ -1078,7 +1069,7 @@ AccelerometerListener {
 
 	}
 
-	private class GetImageUrls extends AsyncTask<String, Void, HashMap<String, Object>> {
+	private class GetImageUrls extends AsyncTask<Void, Void, HashMap<String, Object>> {
 
 		private boolean error;
 		@Override
@@ -1086,14 +1077,14 @@ AccelerometerListener {
 			super.onPreExecute();
 			error = false;
 			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
-			mProgressDialog.setTitle("Getting Images");
-			mProgressDialog.setMessage("Loading...");
+			mProgressDialog.setTitle("Searching For Photos");
+			mProgressDialog.setMessage("Please Wait...");
 			mProgressDialog.setIndeterminate(false);
 			mProgressDialog.show();
 		}
 
 		@Override
-		protected HashMap<String, Object> doInBackground(String... URL) {	
+		protected HashMap<String, Object> doInBackground(Void... params) {	
 
 			String myURL = "https://hezzapp.appspot.com/getpic";
 			
@@ -1174,6 +1165,7 @@ AccelerometerListener {
 			}else{
 					// List<String> z;
 //					listVar.clear();
+//					imagesTemp.clear();
 					imagesTemp = (ArrayList<HashMap<String, Object>>) result.get("list");
 					new DownloadThumbnails()
 							.execute(imagesTemp);
@@ -1183,10 +1175,13 @@ AccelerometerListener {
 	}
 	
 	private class DownloadImages extends AsyncTask<Set<Integer>, String, Integer> {
+		
+		int count=1;
 
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			
 			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
 			mProgressDialog.setMessage("Downloading Full Size Images. Please wait...");
 			mProgressDialog.setIndeterminate(false);
@@ -1201,9 +1196,8 @@ AccelerometerListener {
 		@Override
 		protected Integer doInBackground(Set<Integer>... list) {
 			
-			//TODO find a way to update the message in the Progress bar to indicate the # of pics downloaind
-			//TODO for example ( 1/3) (2/3) and so on.
 			Set<Integer> items = list[0];
+			final int size= items.size();
 			String imageURL = "";
 			Bitmap bitmap;
 			HashMap<String, Object> tempMap;
@@ -1212,6 +1206,14 @@ AccelerometerListener {
 			}
 			String filepath = "";
 			for (Iterator iterator = items.iterator(); iterator.hasNext();) {
+				
+				runOnUiThread(new Runnable() {
+					public void run() {
+						mProgressDialog.setMessage("Downloading Full Size Images. Please wait... ("+count+"/"+size+")");
+						count++;
+					}
+				});
+				
 				tempMap = thumbnailsMap.get((Integer) iterator.next());
 				
 				imageURL = (String) tempMap.get("url");
@@ -1271,8 +1273,6 @@ AccelerometerListener {
 				}
 				Log.i("filepath:", " " + filepath);
 			}
-			//TODO when all pics are downloaded, show Toast : Download complete or all pics are saved in gallery
-			//TODO then return to the landing main page.
 
 			// fix this return
 			return 1;
@@ -1291,10 +1291,11 @@ AccelerometerListener {
 			// Set the bitmap into ImageView
 //			image.setImageBitmap(result);
 			mProgressDialog.dismiss();
+			Toast.makeText(ReceiverActivity.this, "Download Completed. Photos Saved To Gallery", 
+					Toast.LENGTH_SHORT).show();
+			
 			if(result == null)
 			{
-				//String root = Environment.getExternalStorageDirectory().toString();
-				//System.out.println("ROOOT" + root);
 				passcode.setText("");
 				runOnUiThread(new Runnable() {
 					public void run() {
@@ -1320,8 +1321,8 @@ AccelerometerListener {
 			super.onPreExecute();
 			imageList = new ArrayList<HashMap<String, Object>>();
 			pProgressDialog = new ProgressDialog(ReceiverActivity.this);
-//			pProgressDialog.setTitle("Images Preview");
-			pProgressDialog.setMessage("Previewing Images...");
+			pProgressDialog.setTitle("Previewing Photos");
+			pProgressDialog.setMessage("Please Wait...");
 			pProgressDialog.setIndeterminate(false);
 			pProgressDialog.show();
 		}
@@ -1369,8 +1370,6 @@ AccelerometerListener {
 
 		@Override
 		protected void onPostExecute(ArrayList<HashMap<String, Object>> result) {
-			// Set the bitmap into ImageView
-//			image.setImageBitmap(result);
 			pProgressDialog.dismiss();
 			thumbnailsMap = result;
 			if(result == null)

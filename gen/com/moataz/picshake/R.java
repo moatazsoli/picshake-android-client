@@ -244,14 +244,15 @@ containing a value of this type.
         public static final int download=0x7f02001a;
         public static final int foldercamera=0x7f02001b;
         public static final int greencheckmark=0x7f02001c;
-        public static final int ic_launcher1=0x7f02001d;
-        public static final int ic_launcherorange=0x7f02001e;
-        public static final int ic_plusone_medium_off_client=0x7f02001f;
-        public static final int ic_plusone_small_off_client=0x7f020020;
-        public static final int ic_plusone_standard_off_client=0x7f020021;
-        public static final int ic_plusone_tall_off_client=0x7f020022;
-        public static final int roundshapebtn=0x7f020023;
-        public static final int watermark=0x7f020024;
+        public static final int greencheckmark1=0x7f02001d;
+        public static final int ic_launcher1=0x7f02001e;
+        public static final int ic_launcherorange=0x7f02001f;
+        public static final int ic_plusone_medium_off_client=0x7f020020;
+        public static final int ic_plusone_small_off_client=0x7f020021;
+        public static final int ic_plusone_standard_off_client=0x7f020022;
+        public static final int ic_plusone_tall_off_client=0x7f020023;
+        public static final int roundshapebtn=0x7f020024;
+        public static final int watermark=0x7f020025;
     }
     public static final class id {
         public static final int LinearLayout1=0x7f060008;

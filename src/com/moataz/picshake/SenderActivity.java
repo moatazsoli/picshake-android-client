@@ -7,7 +7,10 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
 
 import org.apache.http.HttpResponse;
@@ -76,7 +79,8 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     private int serverResponseCode = 0;
     private ProgressDialog dialog = null;
     private Bitmap bm;
-    private String picture_path = null; 
+//    private String picture_path = null;
+    private ArrayList<String> photoPathsList;
     private ProgressDialog mProgressDialog;
 	
 	// Stores the current instantiation of the location client in this object
@@ -108,6 +112,8 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		setContentView(R.layout.activity_sender);
 		// Show the Up button in the action bar.
 		setupActionBar();
+		
+		photoPathsList = new ArrayList<String>();
 		Intent mIntent = getIntent();
 		int selectOrCamera = mIntent.getIntExtra("selectOrCamera", 0);
 		// Upload stuff
@@ -118,16 +124,16 @@ GooglePlayServicesClient.OnConnectionFailedListener {
         uploadButton.setOnClickListener(new OnClickListener() {            
             @Override
             public void onClick(View v) {
-            	 try {
-                     bm = BitmapFactory.decodeFile(picture_path);
-                     
-                 } catch (Exception e) {
-                     Log.e(e.getClass().getName(), e.getMessage());
-                 }
+//            	 try {
+//                     bm = BitmapFactory.decodeFile(picture_path);
+//                     
+//                 } catch (Exception e) {
+//                     Log.e(e.getClass().getName(), e.getMessage());
+//                 }
             	
                // dialog = ProgressDialog.show(SenderActivity.this, "", "Uploading file...", true);
 //                stopUpdates();
-                 new UploadImage().execute();
+                 new UploadImage().execute(photoPathsList);
                                                      
                 }
             });
@@ -432,7 +438,8 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 //
 //			    Bitmap bitmap = BitmapFactory.decodeFile(picturePath, bmOptions);
 //			    mImageView.setImageBitmap(bitmap);
-			    picture_path = picturePath;
+	            photoPathsList.add(picturePath);
+//			    picture_path = picturePath;
 			    
             } else if (resultCode == RESULT_CANCELED) {
                 // user cancelled Image capture
@@ -479,8 +486,8 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 
 			    Bitmap bitmap = BitmapFactory.decodeFile(picturePath, bmOptions);
 			    mImageView.setImageBitmap(bitmap);
-			    picture_path = picturePath;
-				System.out.println(picturePath);  // USE THIS AS PICTURE PAAAAAAAATHHH !!
+			    photoPathsList.add(picturePath);
+//			    picture_path = picturePath;
 				break;
 				//imageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
 			}
@@ -797,7 +804,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		}
 	}
 	
-	public int uploadFile() {
+	public int uploadFile(Bitmap bmToUpload) {
 
 		try {
 			HttpClient httpClient = new DefaultHttpClient();
@@ -830,7 +837,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 			}   
 
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			bm.compress(CompressFormat.JPEG, 100, bos);
+			bmToUpload.compress(CompressFormat.JPEG, 100, bos);
 			byte[] data = bos.toByteArray();
 			HttpPost postRequest = new HttpPost(s1.toString());
 			//    "http://hezzapp.appspot.com/_ah/upload/AMmfu6ZVSlpuF4VCQyW6D-SytsfCEC79yyS66YRi5aZApJmmVtFn1sL8xHgCiv5SDeuUB4h0VHW28ehwedWGnKAf2QfbQBlt9wMqhBvt9yR4Q12ovqrwgC0/ALBNUaYAAAAAUvrywvX7Sb3dDVb_oI77Wqyt5qUUoIoY/");
@@ -897,8 +904,10 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		return serverResponseCode; 
 	}
 	
-	private class UploadImage extends AsyncTask<String, Void, String> {
+	private class UploadImage extends AsyncTask<ArrayList<String>, Void, String> {
 		
+		ArrayList<String> pathsList;
+		String pathTempHolder;
 		@Override
 		protected void onPreExecute() {
 			mProgressDialog = new ProgressDialog(SenderActivity.this);
@@ -913,25 +922,29 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		}
 
 		@Override
-		protected String doInBackground(String... params) {
-			uploadFile();
+		protected String doInBackground(ArrayList<String>... params) {
+			pathsList = params[0];
+//			String picPath = params[0];
+			for (Iterator iterator = pathsList.iterator(); iterator.hasNext();) {
+				pathTempHolder = (String) iterator.next();
+				try {
+					bm = BitmapFactory.decodeFile(pathTempHolder);
+					uploadFile(bm);
+
+				} catch (Exception e) {
+					Log.e(e.getClass().getName(), e.getMessage());
+				}
+			}
+
+			bm = null;
 			return null;
 		}
-		/**
-         * Updating progress bar
-         * */
-        protected void onProgressUpdate(Integer... progress) {
-            // setting progress percentage
-        	mProgressDialog.setProgress((int) (progress[0]));
-       }
         
-        public void updateMe()
-        {
-        	
-        }
 		@Override
 	    protected void onPostExecute(String result) {
 			mProgressDialog.dismiss();
+			photoPathsList.clear();
+//			picture_path="";
 			if(serverResponseCode == 200){
 				passcode.setText("");
 				runOnUiThread(new Runnable() {
