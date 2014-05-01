@@ -52,6 +52,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -61,7 +62,10 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.luminous.pick.CustomGallery;
+import com.luminous.pick.GalleryAdapter;
 import com.moataz.picshake.CustomMultiPartEntity.ProgressListener;
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 public class SenderActivity extends FragmentActivity implements
 LocationListener,
@@ -70,6 +74,12 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 
 	// A request to connect to Location Services
 	private LocationRequest mLocationRequest;
+	
+	private GridView grid;
+	private GalleryAdapter adapter;
+	public final static int RESULT_LOAD_MULTI_IMAGES = 200;
+	
+	
 	public final static int RESULT_LOAD_IMAGE = 5000;
 	private static final int CAMERA_CAPTURE_IMAGE_REQUEST_CODE = 100;
     public static final int MEDIA_TYPE_IMAGE = 1;
@@ -187,12 +197,15 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 				
 				@Override
 				public void onClick(View arg0) {
-					startUpdates();
-					Intent i = new Intent(
-							Intent.ACTION_PICK,
-							android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-					
-					startActivityForResult(i, RESULT_LOAD_IMAGE);
+//					startUpdates();
+//					Intent i = new Intent(
+//							Intent.ACTION_PICK,
+//							android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//					
+//					startActivityForResult(i, RESULT_LOAD_IMAGE);
+					Intent intent = new Intent();
+					intent.setAction(com.luminous.pick.Action.ACTION_MULTIPLE_PICK);
+					startActivityForResult(intent, RESULT_LOAD_MULTI_IMAGES);
 				}
 			});
 		}
@@ -209,7 +222,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	 */
 	private void setupActionBar() {
 
-		getActionBar().setDisplayHomeAsUpEnabled(true);
+	//	getActionBar().setDisplayHomeAsUpEnabled(true);
 
 	}
 	
@@ -422,6 +435,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	                    options);
 	 
 	            mImageView.setImageBitmap(bitmap);
+	          
 //				int targetW = mImageView.getWidth();
 //				int targetH = mImageView.getHeight();
 //				BitmapFactory.Options bmOptions = new BitmapFactory.Options();
@@ -455,41 +469,67 @@ GooglePlayServicesClient.OnConnectionFailedListener {
             }
 			break;
 			
-		case RESULT_LOAD_IMAGE:
+//		case RESULT_LOAD_IMAGE:
+//			super.onActivityResult(requestCode, resultCode, intent);
+//			if (resultCode == RESULT_OK && null != intent) {
+//				Uri selectedImage = intent.getData();
+//				String[] filePathColumn = { MediaStore.Images.Media.DATA };
+//
+//				Cursor cursor = getContentResolver().query(selectedImage,
+//						filePathColumn, null, null, null);
+//				cursor.moveToFirst();
+//
+//				int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+//				String picturePath = cursor.getString(columnIndex);
+//				cursor.close();
+////				System.out.println("ASDFASDF");
+//				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
+//				int targetW = mImageView.getWidth();
+//				int targetH = mImageView.getHeight();
+//				BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+//				bmOptions.inJustDecodeBounds = true;
+//			    BitmapFactory.decodeFile(picturePath, bmOptions);
+//			    int photoW = bmOptions.outWidth;
+//			    int photoH = bmOptions.outHeight;
+//			    int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+//
+//			    // Decode the image file into a Bitmap sized to fill the View
+//			    bmOptions.inJustDecodeBounds = false;
+//			    bmOptions.inSampleSize = scaleFactor;
+//			    bmOptions.inPurgeable = true;
+//
+//			    Bitmap bitmap = BitmapFactory.decodeFile(picturePath, bmOptions);
+//			    mImageView.setImageBitmap(bitmap);
+//			    photoPathsList.add(picturePath);
+////			    picture_path = picturePath;
+//				break;
+//				//imageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+//			}
+			
+		case RESULT_LOAD_MULTI_IMAGES:
 			super.onActivityResult(requestCode, resultCode, intent);
+			
 			if (resultCode == RESULT_OK && null != intent) {
-				Uri selectedImage = intent.getData();
-				String[] filePathColumn = { MediaStore.Images.Media.DATA };
-
-				Cursor cursor = getContentResolver().query(selectedImage,
-						filePathColumn, null, null, null);
-				cursor.moveToFirst();
-
-				int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-				String picturePath = cursor.getString(columnIndex);
-				cursor.close();
-//				System.out.println("ASDFASDF");
 				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
-				int targetW = mImageView.getWidth();
-				int targetH = mImageView.getHeight();
-				BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-				bmOptions.inJustDecodeBounds = true;
-			    BitmapFactory.decodeFile(picturePath, bmOptions);
-			    int photoW = bmOptions.outWidth;
-			    int photoH = bmOptions.outHeight;
-			    int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+				mImageView.setVisibility(View.INVISIBLE);
+				String[] all_path = intent.getStringArrayExtra("all_path");
+				ArrayList<CustomGallery> dataT = new ArrayList<CustomGallery>();
+				
+				//SHould be in Create method
+				adapter=new GalleryAdapter(this, ImageLoader.getInstance(), new String[]{});
+				grid = (GridView) findViewById(R.id.gridView);
+				grid.setAdapter(adapter);
+				
+				for (String string : all_path) {
+					CustomGallery item = new CustomGallery();
+					item.sdcardPath = string;
+					dataT.add(item);
+					photoPathsList.add(item.sdcardPath);
+				    
+				}
 
-			    // Decode the image file into a Bitmap sized to fill the View
-			    bmOptions.inJustDecodeBounds = false;
-			    bmOptions.inSampleSize = scaleFactor;
-			    bmOptions.inPurgeable = true;
-
-			    Bitmap bitmap = BitmapFactory.decodeFile(picturePath, bmOptions);
-			    mImageView.setImageBitmap(bitmap);
-			    photoPathsList.add(picturePath);
-//			    picture_path = picturePath;
-				break;
-				//imageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+				adapter.addAll(dataT);
+				break;	
 			}
 			
 
