@@ -147,13 +147,14 @@ AccelerometerListener {
 		setContentView(R.layout.activity_receiver);
 		// Show the Up button in the action bar.
 		setupActionBar();
-		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark1)).getBitmap();
-		checkmarkDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(checkmarkBitmap, 150, 150, false));
 		
 		//setting up and hiding the GridView
 		mGrid = (GridView) findViewById(R.id.gridView1);
 		textView1 = (TextView) findViewById(R.id.textView1);
 		mGrid.setVisibility(View.GONE);
+		
+		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark1)).getBitmap();
+		checkmarkDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(checkmarkBitmap, 450, 450, false));
 		
 		imgUrlsList = new ArrayList<String>();
 		// Upload stuff
@@ -297,7 +298,7 @@ AccelerometerListener {
 				i.setScaleType(ImageView.ScaleType.FIT_CENTER);
 				i.setPadding(3, 3, 3, 3);
 				i.setVerticalFadingEdgeEnabled(true);
-				i.setLayoutParams(new ViewGroup.LayoutParams(150, 150));
+				i.setLayoutParams(new ViewGroup.LayoutParams(450, 450));
 				l = new CheckableLayout(ReceiverActivity.this);
 				l.setLayoutParams(new GridView.LayoutParams(
 						GridView.LayoutParams.WRAP_CONTENT,

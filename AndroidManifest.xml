@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.moataz.picshake"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.0" 
+    >
 
     <uses-sdk
         android:minSdkVersion="14"
@@ -23,12 +24,15 @@
         android:theme="@style/CustomActionBarTheme" >
         <activity
             android:name="com.moataz.picshake.MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name" 
+            android:screenOrientation="portrait">
         </activity>
         <activity
             android:name="com.moataz.picshake.SenderActivity"
             android:label="@string/title_activity_sender"
-            android:parentActivityName="com.moataz.picshake.MainActivity" >
+            android:parentActivityName="com.moataz.picshake.MainActivity" 
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustPan">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.moataz.picshake.MainActivity" />
@@ -41,7 +45,8 @@
         <activity
             android:name="com.moataz.picshake.ReceiverActivity"
             android:label="@string/title_activity_receiver"
-            android:parentActivityName="com.moataz.picshake.MainActivity" >
+            android:parentActivityName="com.moataz.picshake.MainActivity" 
+            android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.moataz.picshake.MainActivity" />
@@ -56,7 +61,8 @@
             </intent-filter>
         </activity>
         
-         <activity android:name="com.luminous.pick.CustomGalleryActivity" >
+         <activity android:name="com.luminous.pick.CustomGalleryActivity"
+             	   android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="luminous.ACTION_PICK" />
                 <action android:name="luminous.ACTION_MULTIPLE_PICK" />
