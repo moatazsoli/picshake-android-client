@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 
+import javax.microedition.khronos.opengles.GL10;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -37,7 +39,9 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.location.Location;
+import android.media.Image;
 import android.net.Uri;
+import android.opengl.GLES10;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -59,6 +63,7 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.internal.gl;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -79,6 +84,8 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	private GalleryAdapter adapter;
 	public final static int RESULT_LOAD_MULTI_IMAGES = 200;
 	
+	//Max size of bitmap that can be stored 
+	int[] maxBitmapSize;
 	
 	public final static int RESULT_LOAD_IMAGE = 5000;
 	private static final int CAMERA_CAPTURE_IMAGE_REQUEST_CODE = 100;
@@ -123,6 +130,13 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		// Show the Up button in the action bar.
 		setupActionBar();
 		
+		maxBitmapSize = new int[1]; 
+
+		//Get the max bitmap size this hardware can store
+		GLES10.glGetIntegerv(GL10.GL_MAX_TEXTURE_SIZE, maxBitmapSize, 0);
+//		Toast.makeText(SenderActivity.this, "max Size: " + maxBitmapSize[0], 
+//				Toast.LENGTH_SHORT).show();
+		
 		photoPathsList = new ArrayList<String>();
 		Intent mIntent = getIntent();
 		int selectOrCamera = mIntent.getIntExtra("selectOrCamera", 0);
@@ -143,7 +157,9 @@ GooglePlayServicesClient.OnConnectionFailedListener {
             	
                // dialog = ProgressDialog.show(SenderActivity.this, "", "Uploading file...", true);
 //                stopUpdates();
-                 new UploadImage().execute(photoPathsList);
+            	if(passcode.length()>0) {
+            		new UploadImage().execute(photoPathsList);
+            	}
                                                      
                 }
             });
@@ -209,6 +225,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 				}
 			});
 		}
+        
 	}
 	
 	private void connectAndStartLocationUpdates()
@@ -968,14 +985,29 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 			for (Iterator iterator = pathsList.iterator(); iterator.hasNext();) {
 				pathTempHolder = (String) iterator.next();
 				try {
-					bm = BitmapFactory.decodeFile(pathTempHolder);
+					BitmapFactory.Options bounds = new BitmapFactory.Options();
+					bounds.inJustDecodeBounds = true;
+					bounds.inSampleSize = 1;
+					bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
+					
+					//The image uploading is too large for hte phone to handle, so we must resize to fit phone scale
+					while(bounds.outHeight > maxBitmapSize[0] || bounds.outWidth> maxBitmapSize[0]) {
+					    bounds.inSampleSize*=2;
+						bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
+					}
+					
+					//Once here, the Image is now a size capable for the device to upload properly
+					bounds.inJustDecodeBounds = false;
+					bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
 					uploadFile(bm);
-
+					bm.recycle();
+					bm = null;
+		
 				} catch (Exception e) {
 					Log.e(e.getClass().getName(), e.getMessage());
 				}
 			}
-
+			
 			bm = null;
 			return null;
 		}

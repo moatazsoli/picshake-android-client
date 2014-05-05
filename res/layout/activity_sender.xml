@@ -31,12 +31,13 @@
             android:layout_height="294dp"
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
-            android:verticalSpacing="0dp"
-       		android:horizontalSpacing="0dp"
-        	android:stretchMode="columnWidth"
-            android:numColumns="2"
+            android:horizontalSpacing="0dp"
+            android:numColumns="3"
             android:scaleType="fitXY"
-            android:src="@drawable/watermark" >
+            android:src="@drawable/watermark"
+            android:stretchMode="columnWidth"
+            android:verticalSpacing="0dp" >
+
         </GridView>
 
     </RelativeLayout>
