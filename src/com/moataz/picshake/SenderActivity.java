@@ -3,6 +3,7 @@ package com.moataz.picshake;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,6 +17,7 @@ import java.util.Locale;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -80,7 +82,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	// A request to connect to Location Services
 	private LocationRequest mLocationRequest;
 	
-	private GridView grid;
+//	private GridView grid;
 	private GalleryAdapter adapter;
 	public final static int RESULT_LOAD_MULTI_IMAGES = 200;
 	
@@ -127,8 +129,6 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_sender);
-		// Show the Up button in the action bar.
-		setupActionBar();
 		
 		maxBitmapSize = new int[1]; 
 
@@ -142,7 +142,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		int selectOrCamera = mIntent.getIntExtra("selectOrCamera", 0);
 		// Upload stuff
 		uploadButton = (Button)findViewById(R.id.send_button);
-		Button buttonLoadImage = (Button) findViewById(R.id.select_pic);
+//		Button buttonLoadImage = (Button) findViewById(R.id.select_pic);
         passcode = (EditText)findViewById(R.id.passcode);
         
         uploadButton.setOnClickListener(new OnClickListener() {            
@@ -158,7 +158,12 @@ GooglePlayServicesClient.OnConnectionFailedListener {
                // dialog = ProgressDialog.show(SenderActivity.this, "", "Uploading file...", true);
 //                stopUpdates();
             	if(passcode.length()>0) {
-            		new UploadImage().execute(photoPathsList);
+            		if(photoPathsList.size() > 0)
+            			new UploadImage().execute(photoPathsList);
+            		else
+            			Toast.makeText(getApplicationContext(),
+        	                    "No Pictures Selected",
+        	                    Toast.LENGTH_SHORT).show();
             	}
                                                      
                 }
@@ -196,7 +201,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		 * handle callbacks.
 		 */
 		mLocationClient = new LocationClient(this, this, this);
-		connectAndStartLocationUpdates();
+		//connectAndStartLocationUpdates();
         if(selectOrCamera == 1)
 		{
 			if (!isDeviceSupportCamera()) {
@@ -204,26 +209,30 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	                    "Sorry! Your device doesn't support camera",
 	                    Toast.LENGTH_LONG).show();
 			}else{
-				buttonLoadImage.setVisibility(View.GONE);
+//				buttonLoadImage.setVisibility(View.GONE);
 				captureImage();
 			}
 		}else{
 			
-	        buttonLoadImage.setOnClickListener(new View.OnClickListener() {
-				
-				@Override
-				public void onClick(View arg0) {
-//					startUpdates();
-//					Intent i = new Intent(
-//							Intent.ACTION_PICK,
-//							android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-//					
-//					startActivityForResult(i, RESULT_LOAD_IMAGE);
-					Intent intent = new Intent();
-					intent.setAction(com.luminous.pick.Action.ACTION_MULTIPLE_PICK);
-					startActivityForResult(intent, RESULT_LOAD_MULTI_IMAGES);
-				}
-			});
+			Intent intent = new Intent();
+			intent.setAction(com.luminous.pick.Action.ACTION_MULTIPLE_PICK);
+			startActivityForResult(intent, RESULT_LOAD_MULTI_IMAGES);
+			
+//	        buttonLoadImage.setOnClickListener(new View.OnClickListener() {
+//				
+//				@Override
+//				public void onClick(View arg0) {
+////					startUpdates();
+////					Intent i = new Intent(
+////							Intent.ACTION_PICK,
+////							android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+////					
+////					startActivityForResult(i, RESULT_LOAD_IMAGE);
+//					Intent intent = new Intent();
+//					intent.setAction(com.luminous.pick.Action.ACTION_MULTIPLE_PICK);
+//					startActivityForResult(intent, RESULT_LOAD_MULTI_IMAGES);
+//				}
+//			});
 		}
         
 	}
@@ -234,14 +243,6 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		mLocationClient.connect();
 	}
 	
-	/**
-	 * Set up the {@link android.app.ActionBar}.
-	 */
-	private void setupActionBar() {
-
-	//	getActionBar().setDisplayHomeAsUpEnabled(true);
-
-	}
 	
 	private void captureImage() {
 	    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -441,7 +442,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
                 // display it in image view
 //                previewCapturedImage();
 				String picturePath = fileUri.getPath();
-				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
+//				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
 				BitmapFactory.Options options = new BitmapFactory.Options();
 				 
 	            // downsizing image as it throws OutOfMemory Exception for larger
@@ -451,7 +452,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	            final Bitmap bitmap = BitmapFactory.decodeFile(fileUri.getPath(),
 	                    options);
 	 
-	            mImageView.setImageBitmap(bitmap);
+//	            mImageView.setImageBitmap(bitmap);
 	          
 //				int targetW = mImageView.getWidth();
 //				int targetH = mImageView.getHeight();
@@ -527,15 +528,30 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 			super.onActivityResult(requestCode, resultCode, intent);
 			
 			if (resultCode == RESULT_OK && null != intent) {
-				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
-				mImageView.setVisibility(View.INVISIBLE);
+//				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
+//				mImageView.setVisibility(View.INVISIBLE);
 				String[] all_path = intent.getStringArrayExtra("all_path");
+				int lSize = all_path.length;
+				if(lSize == 0)
+				{
+					Toast.makeText(SenderActivity.this, "Please Select At Least 1 Picture", 
+							Toast.LENGTH_SHORT).show();
+				}else if(lSize == 1)
+				{
+					Toast.makeText(SenderActivity.this, "1 Picture Selected", 
+							Toast.LENGTH_SHORT).show();
+				}else if(lSize >1)
+				{
+					Toast.makeText(SenderActivity.this, lSize + "Pictures Selected", 
+							Toast.LENGTH_SHORT).show();
+				}
+				
 				ArrayList<CustomGallery> dataT = new ArrayList<CustomGallery>();
 				
 				//SHould be in Create method
-				adapter=new GalleryAdapter(this, ImageLoader.getInstance(), new String[]{});
-				grid = (GridView) findViewById(R.id.gridView);
-				grid.setAdapter(adapter);
+				//adapter=new GalleryAdapter(this, ImageLoader.getInstance(), new String[]{});
+				//grid = (GridView) findViewById(R.id.gridView);
+				//grid.setAdapter(adapter);
 				
 				for (String string : all_path) {
 					CustomGallery item = new CustomGallery();
@@ -545,7 +561,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 				    
 				}
 
-				adapter.addAll(dataT);
+				//adapter.addAll(dataT);
 				break;	
 			}
 			
@@ -861,42 +877,42 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		}
 	}
 	
-	public int uploadFile(Bitmap bmToUpload) {
+	public int uploadFile(Bitmap bmToUpload, String uploadURL, HttpClient httpClient) {
 
 		try {
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpGet getRequest = new HttpGet();
-			try {
-				getRequest.setURI(new URI("http://hezzapp.appspot.com/getuploadurl"));
-			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			HttpResponse getresponse = httpClient.execute(getRequest);
-			serverResponseCode = getresponse.getStatusLine().getStatusCode();
-			BufferedReader reader1 = new BufferedReader(new InputStreamReader(
-					getresponse.getEntity().getContent(), "UTF-8"));
-			String sResponse1;
-			StringBuilder s1 = new StringBuilder();
-
-			while ((sResponse1 = reader1.readLine()) != null) {
-				s1 = s1.append(sResponse1);
-			}
-			if(serverResponseCode == 200){
-
-				runOnUiThread(new Runnable() {
-					public void run() {
-						String msg = "Got URL";
-						Toast.makeText(SenderActivity.this, "GOT URL!!", 
-								Toast.LENGTH_SHORT).show();
-					}
-				});                
-			}   
+//			HttpClient httpClient = new DefaultHttpClient();
+//			HttpGet getRequest = new HttpGet();
+//			try {
+//				getRequest.setURI(new URI("http://hezzapp.appspot.com/getuploadurl"));
+//			} catch (URISyntaxException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			HttpResponse getresponse = httpClient.execute(getRequest);
+//			serverResponseCode = getresponse.getStatusLine().getStatusCode();
+//			BufferedReader reader1 = new BufferedReader(new InputStreamReader(
+//					getresponse.getEntity().getContent(), "UTF-8"));
+//			String sResponse1;
+//			StringBuilder s1 = new StringBuilder();
+//
+//			while ((sResponse1 = reader1.readLine()) != null) {
+//				s1 = s1.append(sResponse1);
+//			}
+//			if(serverResponseCode == 200){
+//
+//				runOnUiThread(new Runnable() {
+//					public void run() {
+//						String msg = "Got URL";
+//						Toast.makeText(SenderActivity.this, "GOT URL!!", 
+//								Toast.LENGTH_SHORT).show();
+//					}
+//				});                
+//			}   
 
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			bmToUpload.compress(CompressFormat.JPEG, 100, bos);
 			byte[] data = bos.toByteArray();
-			HttpPost postRequest = new HttpPost(s1.toString());
+			HttpPost postRequest = new HttpPost(uploadURL);
 			//    "http://hezzapp.appspot.com/_ah/upload/AMmfu6ZVSlpuF4VCQyW6D-SytsfCEC79yyS66YRi5aZApJmmVtFn1sL8xHgCiv5SDeuUB4h0VHW28ehwedWGnKAf2QfbQBlt9wMqhBvt9yR4Q12ovqrwgC0/ALBNUaYAAAAAUvrywvX7Sb3dDVb_oI77Wqyt5qUUoIoY/");
 			ByteArrayBody bab = new ByteArrayBody(data, "image/jpeg","testimage.jpg");
 			// File file= new File("/mnt/sdcard/forest.png");
@@ -965,10 +981,14 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		
 		ArrayList<String> pathsList;
 		String pathTempHolder;
+		String picUploadUrl;
+		int count;
+		int size;
 		@Override
 		protected void onPreExecute() {
+			count = 1;
 			mProgressDialog = new ProgressDialog(SenderActivity.this);
-			mProgressDialog.setMessage("Uploading file. Please wait...");
+			mProgressDialog.setMessage("Uploading Pictures. Please wait...");
 			mProgressDialog.setIndeterminate(false);
 			mProgressDialog.setMax(100);
 			mProgressDialog.setCanceledOnTouchOutside(false);
@@ -981,31 +1001,81 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		@Override
 		protected String doInBackground(ArrayList<String>... params) {
 			pathsList = params[0];
-//			String picPath = params[0];
-			for (Iterator iterator = pathsList.iterator(); iterator.hasNext();) {
-				pathTempHolder = (String) iterator.next();
-				try {
-					BitmapFactory.Options bounds = new BitmapFactory.Options();
-					bounds.inJustDecodeBounds = true;
-					bounds.inSampleSize = 1;
-					bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
-					
-					//The image uploading is too large for hte phone to handle, so we must resize to fit phone scale
-					while(bounds.outHeight > maxBitmapSize[0] || bounds.outWidth> maxBitmapSize[0]) {
-					    bounds.inSampleSize*=2;
-						bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
-					}
-					
-					//Once here, the Image is now a size capable for the device to upload properly
-					bounds.inJustDecodeBounds = false;
-					bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
-					uploadFile(bm);
-					bm.recycle();
-					bm = null;
-		
-				} catch (Exception e) {
-					Log.e(e.getClass().getName(), e.getMessage());
+			size = pathsList.size();
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpGet getRequest = new HttpGet();
+			try {
+				getRequest.setURI(new URI("http://hezzapp.appspot.com/getuploadurl"));
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			HttpResponse getresponse;
+			try {
+				getresponse = httpClient.execute(getRequest);
+
+				serverResponseCode = getresponse.getStatusLine().getStatusCode();
+				BufferedReader reader1 = new BufferedReader(new InputStreamReader(
+						getresponse.getEntity().getContent(), "UTF-8"));
+				String sResponse1;
+				StringBuilder s1 = new StringBuilder();
+
+				while ((sResponse1 = reader1.readLine()) != null) {
+					s1 = s1.append(sResponse1);
 				}
+				if(serverResponseCode == 200){
+
+					runOnUiThread(new Runnable() {
+						public void run() {
+							Toast.makeText(SenderActivity.this, "GOT URL!!", 
+									Toast.LENGTH_SHORT).show();
+						}
+					});                
+				}   
+				picUploadUrl = s1.toString();
+
+
+				
+				//			String picPath = params[0];
+				for (Iterator iterator = pathsList.iterator(); iterator.hasNext();) {
+					
+					
+					runOnUiThread(new Runnable() {
+						public void run() {
+							mProgressDialog.setMessage("Uploading Pictures. Please wait... ("+count+"/"+size+")");
+							count++;
+						}
+					});
+					pathTempHolder = (String) iterator.next();
+					try {
+						BitmapFactory.Options bounds = new BitmapFactory.Options();
+						bounds.inJustDecodeBounds = true;
+						bounds.inSampleSize = 1;
+						bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
+
+						//The image uploading is too large for hte phone to handle, so we must resize to fit phone scale
+						while(bounds.outHeight > maxBitmapSize[0] || bounds.outWidth> maxBitmapSize[0]) {
+							bounds.inSampleSize*=2;
+							bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
+						}
+
+						//Once here, the Image is now a size capable for the device to upload properly
+						bounds.inJustDecodeBounds = false;
+						bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
+						uploadFile(bm, picUploadUrl, httpClient);
+						bm.recycle();
+						bm = null;
+
+					} catch (Exception e) {
+						Log.e(e.getClass().getName(), e.getMessage());
+					}
+				}
+			} catch (ClientProtocolException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
 			
 			bm = null;
