@@ -33,6 +33,8 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -154,7 +156,7 @@ AccelerometerListener {
 		mGrid.setVisibility(View.GONE);
 		
 		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark1)).getBitmap();
-		checkmarkDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(checkmarkBitmap, 450, 450, false));
+		checkmarkDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(checkmarkBitmap, 150, 150, false));
 		
 		imgUrlsList = new ArrayList<String>();
 		// Upload stuff
@@ -298,7 +300,7 @@ AccelerometerListener {
 				i.setScaleType(ImageView.ScaleType.FIT_CENTER);
 				i.setPadding(3, 3, 3, 3);
 				i.setVerticalFadingEdgeEnabled(true);
-				i.setLayoutParams(new ViewGroup.LayoutParams(450, 450));
+				i.setLayoutParams(new ViewGroup.LayoutParams(300,300));
 				l = new CheckableLayout(ReceiverActivity.this);
 				l.setLayoutParams(new GridView.LayoutParams(
 						GridView.LayoutParams.WRAP_CONTENT,
@@ -1273,6 +1275,7 @@ AccelerometerListener {
 					return null;
 				}
 				Log.i("filepath:", " " + filepath);
+				showNotification(count-1,size);
 			}
 
 			// fix this return
@@ -1393,6 +1396,29 @@ AccelerometerListener {
 			}
 			
 		}
+	}
+	
+	private void showNotification(int imagesReceived, int totalImages) {
+
+		String contextText = new String();
+		
+		if(imagesReceived == totalImages) {
+			contextText = "Successfully downloaded all images!";
+		}else{
+			contextText = "Successfully downloaded ("+imagesReceived+"/"+totalImages+") images";
+		}
+
+		 Notification notification = new Notification.Builder(getBaseContext())
+		 						.setContentTitle("PicShake")
+		 						.setContentText(contextText)
+		 						.setSmallIcon(R.drawable.ic_launcher1)
+		 						//.setLargeIcon(aBitmap)
+		 						.build();
+
+		 NotificationManager notificationManager = 
+				  (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+				notificationManager.notify(0, notification); 
 	}
 	
 	

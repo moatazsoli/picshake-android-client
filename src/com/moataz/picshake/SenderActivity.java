@@ -30,6 +30,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -104,6 +106,10 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	
 	// Stores the current instantiation of the location client in this object
 	private LocationClient mLocationClient;
+	
+	private String mLatitude;
+	
+	private String mLongitude;
 
 	// Handles to UI widgets
 	private EditText passcode;
@@ -563,6 +569,9 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 
 				//adapter.addAll(dataT);
 				break;	
+			}else if (resultCode == RESULT_CANCELED){
+				//User didn't upload any images
+				finish();
 			}
 			
 
@@ -938,8 +947,8 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 			
 			reqEntity.addPart("uploaded_file", bab);
 			reqEntity.addPart("passcode", new StringBody(passcode.getText().toString()));
-			reqEntity.addPart("longitude", new StringBody(getLng()));
-			reqEntity.addPart("latitude", new StringBody(getLat()));
+			reqEntity.addPart("longitude", new StringBody(mLongitude));
+			reqEntity.addPart("latitude", new StringBody(mLatitude));
 			
 			postRequest.setEntity(reqEntity);
 			HttpResponse response = httpClient.execute(postRequest);
@@ -996,12 +1005,22 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 			//later on allow user to cancel and set the button callback to cancel and exit the download process
 			//mProgressDialog.setCancelable(true);
 			mProgressDialog.show();
+			
+			//Store coordinates for all pictures to be uploaded 
+			mLatitude = getLat();
+			mLongitude = getLng();
+			
+			if(null == mLatitude || null == mLongitude ) {
+				Toast.makeText(SenderActivity.this, "Error getting coordinates!!!", 
+						Toast.LENGTH_SHORT).show();
+			}
 		}
 
 		@Override
 		protected String doInBackground(ArrayList<String>... params) {
 			pathsList = params[0];
 			size = pathsList.size();
+			int sent  = 0;
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpGet getRequest = new HttpGet();
 			try {
@@ -1065,6 +1084,8 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 						uploadFile(bm, picUploadUrl, httpClient);
 						bm.recycle();
 						bm = null;
+						sent++;
+						showNotification(sent, size);
 
 					} catch (Exception e) {
 						Log.e(e.getClass().getName(), e.getMessage());
@@ -1095,9 +1116,33 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 								Toast.LENGTH_SHORT).show();
 					}
 				});                
-			}  
+			}
+			finish();
 	    }
 		
 		
+	}
+	
+	private void showNotification(int imagesSent, int totalImages) {
+
+		String contextText = new String();
+		
+		if(imagesSent == totalImages) {
+			contextText = "Successfully uploaded all images!";
+		}else{
+			contextText = "Successfully uploaded ("+imagesSent+"/"+totalImages+") images";
+		}
+
+		 Notification notification = new Notification.Builder(getBaseContext())
+		 						.setContentTitle("PicShake")
+		 						.setContentText(contextText)
+		 						.setSmallIcon(R.drawable.ic_launcher1)
+		 						//.setLargeIcon(aBitmap)
+		 						.build();
+
+		 NotificationManager notificationManager = 
+				  (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+				notificationManager.notify(0, notification); 
 	}
 }
