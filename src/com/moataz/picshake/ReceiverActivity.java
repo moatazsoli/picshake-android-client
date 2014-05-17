@@ -56,6 +56,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.ActionMode;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -128,6 +129,7 @@ AccelerometerListener {
 
 	// Handle to SharedPreferences for this app
 	SharedPreferences mPrefs;
+	public boolean mActionModeStarted = false;
 
 	// Handle to a SharedPreferences editor
 	SharedPreferences.Editor mEditor;
@@ -155,7 +157,7 @@ AccelerometerListener {
 		textView1 = (TextView) findViewById(R.id.textView1);
 		mGrid.setVisibility(View.GONE);
 		
-		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark1)).getBitmap();
+		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark22)).getBitmap();
 		checkmarkDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(checkmarkBitmap, 150, 150, false));
 		
 		imgUrlsList = new ArrayList<String>();
@@ -201,6 +203,18 @@ AccelerometerListener {
 	// #######################################################################
 	// Thumbnails Grid
 	// #######################################################################
+	
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event) {
+		if(mActionModeStarted) {
+	        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+	           // handle your back button code here
+	           return true; // consumes the back key event - ActionMode is not finished
+	        }
+	    }
+	    return super.dispatchKeyEvent(event);
+	}
+	
 	public void viewThumbnails() {
 
 	    passcode.setVisibility(View.GONE);
@@ -209,7 +223,15 @@ AccelerometerListener {
 		mGrid.setAdapter(new ThumbnailsAdapter());
 		mGrid.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
 		mGrid.setMultiChoiceModeListener(new MultiChoiceModeListener());
+		Toast.makeText(ReceiverActivity.this, "Press and Hold to Select the Pictures", 
+				Toast.LENGTH_SHORT).show();
 	}
+//	@Override
+//	public void onBackPressed() {
+//	    if(!mActionModeStarted){
+//	        super.onBackPressed();
+//	    }
+//	}
 
 
 	public class MultiChoiceModeListener implements
@@ -221,6 +243,7 @@ AccelerometerListener {
 		}
 
 		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+			mActionModeStarted = true;
 			return true;
 		}
 
@@ -230,12 +253,15 @@ AccelerometerListener {
 
 		@SuppressWarnings("unchecked")
 		public void onDestroyActionMode(ActionMode mode) {
+			mActionModeStarted = false;
 			if(mGrid.getCheckedItemCount()>0)
 			{
 				//TODO add warning regarding sizes , maybe > 5 Mbs
 				new DownloadImages().execute(selectedPositions.keySet());
 			}
 		}
+		
+		
 
 		public void onItemCheckedStateChanged(ActionMode mode, int position,
 				long id, boolean checked) {
@@ -300,11 +326,9 @@ AccelerometerListener {
 				i.setScaleType(ImageView.ScaleType.FIT_CENTER);
 				i.setPadding(3, 3, 3, 3);
 				i.setVerticalFadingEdgeEnabled(true);
-				i.setLayoutParams(new ViewGroup.LayoutParams(300,300));
+				i.setLayoutParams(new ViewGroup.LayoutParams(170,170));
 				l = new CheckableLayout(ReceiverActivity.this);
-				l.setLayoutParams(new GridView.LayoutParams(
-						GridView.LayoutParams.WRAP_CONTENT,
-						GridView.LayoutParams.WRAP_CONTENT));
+				l.setLayoutParams(new GridView.LayoutParams(170,170));
 				l.addView(i);
 			} else {
 				l = (CheckableLayout) convertView;
@@ -1150,7 +1174,6 @@ AccelerometerListener {
 			if(result == null)
 			{
 				String root = Environment.getExternalStorageDirectory().toString();
-				System.out.println("ROOOT" + root);
 				passcode.setText("");
 				runOnUiThread(new Runnable() {
 					public void run() {

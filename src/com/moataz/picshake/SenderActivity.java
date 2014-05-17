@@ -79,7 +79,8 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 public class SenderActivity extends FragmentActivity implements
 LocationListener,
 GooglePlayServicesClient.ConnectionCallbacks,
-GooglePlayServicesClient.OnConnectionFailedListener {
+GooglePlayServicesClient.OnConnectionFailedListener,
+AccelerometerListener {
 
 	// A request to connect to Location Services
 	private LocationRequest mLocationRequest;
@@ -96,7 +97,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     public static final int MEDIA_TYPE_IMAGE = 1;
     private static final String IMAGE_DIRECTORY_NAME = "Hello Camera";
     private Uri fileUri; // file url to store image/video
-	private Button uploadButton;
+//	private Button uploadButton;
     private int serverResponseCode = 0;
     private ProgressDialog dialog = null;
     private Bitmap bm;
@@ -147,33 +148,33 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		Intent mIntent = getIntent();
 		int selectOrCamera = mIntent.getIntExtra("selectOrCamera", 0);
 		// Upload stuff
-		uploadButton = (Button)findViewById(R.id.send_button);
+//		uploadButton = (Button)findViewById(R.id.send_button);
 //		Button buttonLoadImage = (Button) findViewById(R.id.select_pic);
         passcode = (EditText)findViewById(R.id.passcode);
         
-        uploadButton.setOnClickListener(new OnClickListener() {            
-            @Override
-            public void onClick(View v) {
-//            	 try {
-//                     bm = BitmapFactory.decodeFile(picture_path);
-//                     
-//                 } catch (Exception e) {
-//                     Log.e(e.getClass().getName(), e.getMessage());
-//                 }
-            	
-               // dialog = ProgressDialog.show(SenderActivity.this, "", "Uploading file...", true);
-//                stopUpdates();
-            	if(passcode.length()>0) {
-            		if(photoPathsList.size() > 0)
-            			new UploadImage().execute(photoPathsList);
-            		else
-            			Toast.makeText(getApplicationContext(),
-        	                    "No Pictures Selected",
-        	                    Toast.LENGTH_SHORT).show();
-            	}
-                                                     
-                }
-            });
+//        uploadButton.setOnClickListener(new OnClickListener() {            
+//            @Override
+//            public void onClick(View v) {
+////            	 try {
+////                     bm = BitmapFactory.decodeFile(picture_path);
+////                     
+////                 } catch (Exception e) {
+////                     Log.e(e.getClass().getName(), e.getMessage());
+////                 }
+//            	
+//               // dialog = ProgressDialog.show(SenderActivity.this, "", "Uploading file...", true);
+////                stopUpdates();
+//            	if(passcode.length()>0) {
+//            		if(photoPathsList.size() > 0)
+//            			new UploadImage().execute(photoPathsList);
+//            		else
+//            			Toast.makeText(getApplicationContext(),
+//        	                    "No Pictures Selected",
+//        	                    Toast.LENGTH_SHORT).show();
+//            	}
+//                                                     
+//                }
+//            });
         
 		//***
 		
@@ -240,6 +241,13 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 //				}
 //			});
 		}
+        
+        if (AccelerometerManager.isSupported(this)) {
+//          Toast.makeText(getBaseContext(), "onResume Accelerometer Started", 
+//    		Toast.LENGTH_LONG).show();
+        	//Start Accelerometer Listening
+			AccelerometerManager.startListening(this);
+        }
         
 	}
 	
@@ -376,6 +384,15 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 
 		// After disconnect() is called, the client is considered "dead".
 		mLocationClient.disconnect();
+		
+		if (AccelerometerManager.isListening()) {
+        	
+        	//Start Accelerometer Listening
+			AccelerometerManager.stopListening();
+			
+//			Toast.makeText(getBaseContext(), "onStop Accelerometer Stoped", 
+//					Toast.LENGTH_LONG).show();
+        }
 
 		super.onStop();
 	}
@@ -423,6 +440,30 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		} else {
 			mEditor.putBoolean(LocationUtils.KEY_UPDATES_REQUESTED, false);
 			mEditor.commit();
+		}
+		
+		if (AccelerometerManager.isSupported(this)) {
+//          Toast.makeText(getBaseContext(), "onResume Accelerometer Started", 
+//    		Toast.LENGTH_LONG).show();
+        	//Start Accelerometer Listening
+			AccelerometerManager.startListening(this);
+        }
+
+	}
+	
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		Log.i("Sensor", "Service  distroy");
+
+		//Check device supported Accelerometer senssor or not
+		if (AccelerometerManager.isListening()) {
+
+			//Start Accelerometer Listening
+			AccelerometerManager.stopListening();
+
+			//			Toast.makeText(getBaseContext(), "onDestroy Accelerometer Stoped", 
+			//					Toast.LENGTH_LONG).show();
 		}
 
 	}
@@ -548,7 +589,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 							Toast.LENGTH_SHORT).show();
 				}else if(lSize >1)
 				{
-					Toast.makeText(SenderActivity.this, lSize + "Pictures Selected", 
+					Toast.makeText(SenderActivity.this, lSize + " Pictures Selected", 
 							Toast.LENGTH_SHORT).show();
 				}
 				
@@ -919,7 +960,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 //			}   
 
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			bmToUpload.compress(CompressFormat.JPEG, 100, bos);
+			bmToUpload.compress(CompressFormat.JPEG, 95, bos);
 			byte[] data = bos.toByteArray();
 			HttpPost postRequest = new HttpPost(uploadURL);
 			//    "http://hezzapp.appspot.com/_ah/upload/AMmfu6ZVSlpuF4VCQyW6D-SytsfCEC79yyS66YRi5aZApJmmVtFn1sL8xHgCiv5SDeuUB4h0VHW28ehwedWGnKAf2QfbQBlt9wMqhBvt9yR4Q12ovqrwgC0/ALBNUaYAAAAAUvrywvX7Sb3dDVb_oI77Wqyt5qUUoIoY/");
@@ -995,6 +1036,10 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		int size;
 		@Override
 		protected void onPreExecute() {
+			if (AccelerometerManager.isListening()) {
+				AccelerometerManager.stopListening();
+	        }
+			
 			count = 1;
 			mProgressDialog = new ProgressDialog(SenderActivity.this);
 			mProgressDialog.setMessage("Uploading Pictures. Please wait...");
@@ -1044,12 +1089,12 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 				}
 				if(serverResponseCode == 200){
 
-					runOnUiThread(new Runnable() {
-						public void run() {
-							Toast.makeText(SenderActivity.this, "GOT URL!!", 
-									Toast.LENGTH_SHORT).show();
-						}
-					});                
+//					runOnUiThread(new Runnable() {
+//						public void run() {
+//							Toast.makeText(SenderActivity.this, "GOT URL!!", 
+//									Toast.LENGTH_SHORT).show();
+//						}
+//					});                
 				}   
 				picUploadUrl = s1.toString();
 
@@ -1144,5 +1189,25 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 				  (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
 				notificationManager.notify(0, notification); 
+	}
+
+	@Override
+	public void onAccelerationChanged(float x, float y, float z) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	public void onShake(float force) {
+
+		if(passcode.length()>0) {
+    		if(photoPathsList.size() > 0)
+    			new UploadImage().execute(photoPathsList);
+    		else
+    			Toast.makeText(getApplicationContext(),
+	                    "No Pictures Selected",
+	                    Toast.LENGTH_SHORT).show();
+    	}
+
 	}
 }
