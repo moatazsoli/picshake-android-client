@@ -1444,7 +1444,11 @@ AccelerometerListener {
 
 		String contextText = new String();
 
-		Intent intent = new Intent(this, ReceiverActivity.class);
+//		Intent intent = new Intent(this, ReceiverActivity.class);
+		Intent intent = new Intent(
+                Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
 	    PendingIntent pIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 	    Notification notification;
 	    		

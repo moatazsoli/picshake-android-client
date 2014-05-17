@@ -205,7 +205,7 @@ public class AccelerometerManager {
                 }
                 else
                 {
-                	Toast.makeText(aContext,"No Motion detected", Toast.LENGTH_SHORT).show();
+//                	Toast.makeText(aContext,"No Motion detected", Toast.LENGTH_SHORT).show();
                 	
                 }
             }
