@@ -5,6 +5,7 @@ import android.app.ActionBar;
 import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -38,8 +39,15 @@ public class MainActivity extends Activity {
 		{
 			showNoInternetSettingsAlert();
 		}
-		
 
+
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		NotificationManager nm = (NotificationManager)  getSystemService(NOTIFICATION_SERVICE);
+	    nm.cancel(0);
 	}
 	
 	

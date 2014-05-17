@@ -32,6 +32,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -42,8 +43,10 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.location.Location;
 import android.media.Image;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.opengl.GLES10;
 import android.os.AsyncTask;
@@ -127,6 +130,9 @@ AccelerometerListener {
 	 *
 	 */
 	boolean mUpdatesRequested = false;
+	
+	
+	private NotificationManager notificationManager;
 
 	/*
 	 * Initialize the Activity
@@ -156,6 +162,7 @@ AccelerometerListener {
 //            @Override
 //            public void onClick(View v) {
 ////            	 try {
+
 ////                     bm = BitmapFactory.decodeFile(picture_path);
 ////                     
 ////                 } catch (Exception e) {
@@ -174,7 +181,24 @@ AccelerometerListener {
 //            	}
 //                                                     
 //                }
-//            });
+//            });	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
 		//***
 		
@@ -242,12 +266,15 @@ AccelerometerListener {
 //			});
 		}
         
-        if (AccelerometerManager.isSupported(this)) {
+
+		 if (AccelerometerManager.isSupported(this)) {
 //          Toast.makeText(getBaseContext(), "onResume Accelerometer Started", 
 //    		Toast.LENGTH_LONG).show();
         	//Start Accelerometer Listening
 			AccelerometerManager.startListening(this);
         }
+
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         
 	}
 	
@@ -384,7 +411,7 @@ AccelerometerListener {
 
 		// After disconnect() is called, the client is considered "dead".
 		mLocationClient.disconnect();
-		
+
 		if (AccelerometerManager.isListening()) {
         	
         	//Start Accelerometer Listening
@@ -449,6 +476,7 @@ AccelerometerListener {
 			AccelerometerManager.startListening(this);
         }
 
+		notificationManager.cancel(0);
 	}
 	
 	@Override
@@ -465,7 +493,6 @@ AccelerometerListener {
 			//			Toast.makeText(getBaseContext(), "onDestroy Accelerometer Stoped", 
 			//					Toast.LENGTH_LONG).show();
 		}
-
 	}
 
 	/*
@@ -960,7 +987,7 @@ AccelerometerListener {
 //			}   
 
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			bmToUpload.compress(CompressFormat.JPEG, 95, bos);
+			bmToUpload.compress(CompressFormat.JPEG, 100, bos);
 			byte[] data = bos.toByteArray();
 			HttpPost postRequest = new HttpPost(uploadURL);
 			//    "http://hezzapp.appspot.com/_ah/upload/AMmfu6ZVSlpuF4VCQyW6D-SytsfCEC79yyS66YRi5aZApJmmVtFn1sL8xHgCiv5SDeuUB4h0VHW28ehwedWGnKAf2QfbQBlt9wMqhBvt9yR4Q12ovqrwgC0/ALBNUaYAAAAAUvrywvX7Sb3dDVb_oI77Wqyt5qUUoIoY/");
@@ -1095,6 +1122,7 @@ AccelerometerListener {
 //									Toast.LENGTH_SHORT).show();
 //						}
 //					});                
+               
 				}   
 				picUploadUrl = s1.toString();
 
@@ -1171,24 +1199,40 @@ AccelerometerListener {
 	private void showNotification(int imagesSent, int totalImages) {
 
 		String contextText = new String();
+		Intent intent = new Intent(this, SenderActivity.class);
+	    PendingIntent pIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+	    Notification notification;
 		
 		if(imagesSent == totalImages) {
 			contextText = "Successfully uploaded all images!";
+			
+		    Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+		    
+			notification = new Notification.Builder(getBaseContext())
+			 						.setContentTitle("PicShake")
+			 						.setContentText(contextText)
+			 						.setContentIntent(pIntent)
+			 						.setSmallIcon( R.drawable.ic_stat_notify_pic)
+			 						.setLargeIcon(BitmapFactory.decodeResource(getResources(),
+	                                        R.drawable.ic_launcherorange))
+	                                .setSound(alarmSound)
+	                               // .setLights(Color.BLUE, 500, 500)
+			 						.build();
+			
 		}else{
 			contextText = "Successfully uploaded ("+imagesSent+"/"+totalImages+") images";
+			
+			notification = new Notification.Builder(getBaseContext())
+			 						.setContentTitle("PicShake")			 						
+			 						.setContentText(contextText)
+			 						.setContentIntent(pIntent)
+			 						.setSmallIcon( R.drawable.ic_stat_notify_pic)
+			 						.setLargeIcon(BitmapFactory.decodeResource(getResources(),
+	                                        R.drawable.ic_launcherorange))
+			 						.build();
 		}
 
-		 Notification notification = new Notification.Builder(getBaseContext())
-		 						.setContentTitle("PicShake")
-		 						.setContentText(contextText)
-		 						.setSmallIcon(R.drawable.ic_launcher1)
-		 						//.setLargeIcon(aBitmap)
-		 						.build();
-
-		 NotificationManager notificationManager = 
-				  (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-				notificationManager.notify(0, notification); 
+		notificationManager.notify(0, notification); 
 	}
 
 	@Override
@@ -1210,4 +1254,22 @@ AccelerometerListener {
     	}
 
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

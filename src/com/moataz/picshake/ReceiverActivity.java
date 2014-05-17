@@ -35,6 +35,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -44,9 +45,12 @@ import android.content.SharedPreferences;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -54,6 +58,7 @@ import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.KeyEvent;
@@ -140,6 +145,8 @@ AccelerometerListener {
 	 *
 	 */
 	boolean mUpdatesRequested = false;
+	
+	private NotificationManager notificationManager;
 
 	/*
 	 * Initialize the Activity
@@ -198,12 +205,14 @@ AccelerometerListener {
 		 */
 		mLocationClient = new LocationClient(this, this, this);
 		
+		notificationManager = (NotificationManager)  getSystemService(NOTIFICATION_SERVICE);
+		
 	}
 	
 	// #######################################################################
 	// Thumbnails Grid
 	// #######################################################################
-	
+
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		if(mActionModeStarted) {
@@ -225,13 +234,14 @@ AccelerometerListener {
 		mGrid.setMultiChoiceModeListener(new MultiChoiceModeListener());
 		Toast.makeText(ReceiverActivity.this, "Press and Hold to Select the Pictures", 
 				Toast.LENGTH_SHORT).show();
+
 	}
-//	@Override
-//	public void onBackPressed() {
-//	    if(!mActionModeStarted){
-//	        super.onBackPressed();
-//	    }
-//	}
+
+
+
+
+
+
 
 
 	public class MultiChoiceModeListener implements
@@ -260,8 +270,8 @@ AccelerometerListener {
 				new DownloadImages().execute(selectedPositions.keySet());
 			}
 		}
-		
-		
+
+
 
 		public void onItemCheckedStateChanged(ActionMode mode, int position,
 				long id, boolean checked) {
@@ -323,12 +333,14 @@ AccelerometerListener {
 
 			if (convertView == null) {
 				i = new ImageView(ReceiverActivity.this);
-				i.setScaleType(ImageView.ScaleType.FIT_CENTER);
-				i.setPadding(3, 3, 3, 3);
-				i.setVerticalFadingEdgeEnabled(true);
-				i.setLayoutParams(new ViewGroup.LayoutParams(170,170));
+				i.setScaleType(ImageView.ScaleType.CENTER_CROP);
+				i.setPadding(1, 1, 1, 1);
+//				i.setVerticalFadingEdgeEnabled(true);
+				//i.setLayoutParams(new ViewGroup.LayoutParams(300,300));
 				l = new CheckableLayout(ReceiverActivity.this);
-				l.setLayoutParams(new GridView.LayoutParams(170,170));
+				l.setLayoutParams(new GridView.LayoutParams(
+						GridView.LayoutParams.MATCH_PARENT,
+						dpToPx(120)));
 				l.addView(i);
 			} else {
 				l = (CheckableLayout) convertView;
@@ -355,7 +367,12 @@ AccelerometerListener {
 		}
 	}
 	
-	
+
+	public int dpToPx(int dp) {
+	    DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+	    int px = Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));       
+	    return px;
+	}
 	
 	
 	//#######################################################################
@@ -485,6 +502,7 @@ AccelerometerListener {
 			AccelerometerManager.startListening(this);
         }
 
+		notificationManager.cancel(0);
 	}
 
 	/*
@@ -1174,6 +1192,7 @@ AccelerometerListener {
 			if(result == null)
 			{
 				String root = Environment.getExternalStorageDirectory().toString();
+				System.out.println("ROOOT" + root);
 				passcode.setText("");
 				runOnUiThread(new Runnable() {
 					public void run() {
@@ -1424,24 +1443,54 @@ AccelerometerListener {
 	private void showNotification(int imagesReceived, int totalImages) {
 
 		String contextText = new String();
-		
+
+		Intent intent = new Intent(this, ReceiverActivity.class);
+	    PendingIntent pIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+	    Notification notification;
+	    		
 		if(imagesReceived == totalImages) {
 			contextText = "Successfully downloaded all images!";
+			
+			Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+			notification = new Notification.Builder(getBaseContext())
+									.setContentTitle("PicShake")
+									.setContentText(contextText)
+									.setContentIntent(pIntent)
+									.setSmallIcon( R.drawable.ic_stat_notify_pic)
+									.setLargeIcon(BitmapFactory.decodeResource(getResources(),
+						                R.drawable.ic_launcherorange))
+						            .setSound(alarmSound)
+			                    //    .setLights(Color.BLUE, 500, 500)
+									.build();	
+			
 		}else{
 			contextText = "Successfully downloaded ("+imagesReceived+"/"+totalImages+") images";
+			
+			notification = new Notification.Builder(getBaseContext())
+									.setContentTitle("PicShake")
+									.setContentText(contextText)
+									.setContentIntent(pIntent)
+									.setSmallIcon( R.drawable.ic_stat_notify_pic)
+									.setLargeIcon(BitmapFactory.decodeResource(getResources(),
+						                R.drawable.ic_launcherorange))
+									.build();
 		}
 
-		 Notification notification = new Notification.Builder(getBaseContext())
-		 						.setContentTitle("PicShake")
-		 						.setContentText(contextText)
-		 						.setSmallIcon(R.drawable.ic_launcher1)
-		 						//.setLargeIcon(aBitmap)
-		 						.build();
 
-		 NotificationManager notificationManager = 
-				  (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-				notificationManager.notify(0, notification); 
+
+
+
+
+
+
+
+	  
+
+//		 NotificationManager notificationManager = 
+//				  (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+		notificationManager.notify(0, notification); 
 	}
 	
 	
