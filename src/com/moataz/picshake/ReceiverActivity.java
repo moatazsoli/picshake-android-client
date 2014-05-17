@@ -1450,8 +1450,8 @@ AccelerometerListener {
 	    		
 		if(imagesReceived == totalImages) {
 			contextText = "Successfully downloaded all images!";
-			
-			Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+			Uri alarmSound = Uri.parse("android.resource://com.moataz.picshake/" + R.raw.arpeggio);
+//			Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 			notification = new Notification.Builder(getBaseContext())
 									.setContentTitle("PicShake")
 									.setContentText(contextText)
