@@ -44,6 +44,7 @@
 
         <activity
             android:name="com.moataz.picshake.ReceiverActivity"
+            android:windowSoftInputMode="adjustPan"
             android:label="@string/title_activity_receiver"
             android:parentActivityName="com.moataz.picshake.MainActivity" 
             android:screenOrientation="portrait" >

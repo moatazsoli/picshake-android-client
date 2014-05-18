@@ -1480,20 +1480,6 @@ AccelerometerListener {
 									.build();
 		}
 
-
-
-
-
-
-
-
-
-
-	  
-
-//		 NotificationManager notificationManager = 
-//				  (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
 		notificationManager.notify(0, notification); 
 	}
 	

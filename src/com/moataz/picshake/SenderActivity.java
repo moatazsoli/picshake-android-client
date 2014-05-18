@@ -183,22 +183,6 @@ AccelerometerListener {
 //                }
 //            });	
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         
 		//***
 		
@@ -266,13 +250,13 @@ AccelerometerListener {
 //			});
 		}
         
-
-		 if (AccelerometerManager.isSupported(this)) {
-//          Toast.makeText(getBaseContext(), "onResume Accelerometer Started", 
-//    		Toast.LENGTH_LONG).show();
-        	//Start Accelerometer Listening
-			AccelerometerManager.startListening(this);
-        }
+//
+//		 if (AccelerometerManager.isSupported(this)) {
+////          Toast.makeText(getBaseContext(), "onResume Accelerometer Started", 
+////    		Toast.LENGTH_LONG).show();
+//        	//Start Accelerometer Listening
+//			AccelerometerManager.startListening(this);
+//        }
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         
@@ -433,8 +417,16 @@ AccelerometerListener {
 		// Save the current setting for updates
 		mEditor.putBoolean(LocationUtils.KEY_UPDATES_REQUESTED, mUpdatesRequested);
 		mEditor.commit();
-
+		
+		//Check device supported Accelerometer senssor or not
+		if (AccelerometerManager.isListening()) {
+			//Start Accelerometer Listening
+			AccelerometerManager.stopListening();
+			//			Toast.makeText(getBaseContext(), "onDestroy Accelerometer Stoped", 
+			//					Toast.LENGTH_LONG).show();
+		}	
 		super.onPause();
+		
 	}
 
 	/*
@@ -1200,7 +1192,7 @@ AccelerometerListener {
 
 		String contextText = new String();
 		Intent intent = new Intent(this, SenderActivity.class);
-	    PendingIntent pIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+	    PendingIntent pIntent = PendingIntent.getActivity(this, 1000, intent, PendingIntent.FLAG_UPDATE_CURRENT );
 	    Notification notification;
 		
 		if(imagesSent == totalImages) {
