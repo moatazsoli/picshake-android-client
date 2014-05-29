@@ -31,4 +31,16 @@
     <string name="connection_error_outdated">Google Play services is out of date</string>
     <string name="connection_error_sign_in_required">The user is not signed in</string>
     <string name="connection_error_unknown">An unknown error occurred</string>
+    
+    
+    <!--Errors and messages -->
+    
+    <string name="no_internet">No internet connection! Please verify your connection and try again.</string>
+    <string name="username_in_use">Registration Failed. Username is already in use.</string>
+    <string name="invalid_email">Invalid Email Address. Please enter a valid email address.</string>
+    <string name="email_in_use">Email address is already in use.</string>
+    <string name="registration_success">Registration Successful! Welcome To PicShake !</string>
+    <string name="user_inactive">User inactive. Please activate your account through the link in your email.</string>
+    <string name="login_success">Login Successful! Welcome Back !</string>
+    <string name="invalid_login">Login Failed! Invalid Login Information.</string>
 </resources>

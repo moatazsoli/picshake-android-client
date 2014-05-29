@@ -28,6 +28,20 @@ public final class Utils {
         // Showing Alert Message
         alertDialog.show();
 	}
+	
+	public static void exitAlert(String message, Context context)
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(context);
+		builder.setMessage(message)
+		       .setCancelable(false)
+		       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+		           public void onClick(DialogInterface dialog, int id) {
+		        	   System.exit(0);
+		           }
+		       });
+		AlertDialog alert = builder.create();
+		alert.show();
+	}
 }
 
 

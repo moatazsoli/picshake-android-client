@@ -18,7 +18,7 @@ public class Splashscreen extends Activity {
 		    @Override
 		    public void run() {
 		        // Do something after 5s = 5000ms
-		    	Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+		    	Intent intent = new Intent(getApplicationContext(),SigninPage.class);
 		    	startActivity(intent);
 		    	finish();
 		    }

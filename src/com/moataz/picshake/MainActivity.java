@@ -6,6 +6,7 @@ import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,6 +18,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
@@ -24,6 +26,11 @@ import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
+	
+    SecurePreferences preferences;
+    private ProgressDialog progressDialog;
+    private final String _USERNAME_ = "userId";
+    private final String _PASSWORD_ = "password";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +46,14 @@ public class MainActivity extends Activity {
 		{
 			showNoInternetSettingsAlert();
 		}
+		progressDialog = new ProgressDialog(this);
+		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
+
+		// Set progressdialog title
+//		progressDialog.setTitle("Download Image");
+		// Set progressdialog message
+		progressDialog.setMessage("Logging out...");
+		progressDialog.setIndeterminate(false);
 
 
 	}
@@ -159,7 +174,24 @@ public class MainActivity extends Activity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
-		return true;
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    // Handle presses on the action bar items
+	    switch (item.getItemId()) {
+	        case R.id.action_logout:
+	        	preferences.removeValue(_USERNAME_);
+				preferences.removeValue(_PASSWORD_);
+				preferences.put("CheckBox_Value", "0");
+				Intent intent = new Intent(MainActivity.this, SigninPage.class);
+            	startActivity(intent);
+            	finish();
+	            return true;
+	        default:
+	            return super.onOptionsItemSelected(item);
+	    }
 	}
 	
 	
