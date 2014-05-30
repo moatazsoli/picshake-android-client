@@ -65,6 +65,11 @@ public class MainActivity extends Activity {
 	    nm.cancel(0);
 	}
 	
+	@Override
+	public void onBackPressed() {
+	    moveTaskToBack(true);
+	}
+	
 	
 	
 	private boolean isNetworkAvailable() {
