@@ -4,8 +4,6 @@
     <string name="app_name">PicShake</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-	<string name="title_activity_signin_page">SigninPage</string>
-    <string name="title_activity_signup_page">SignupPage</string>
     <string name="title_activity_display_page">DisplayPage</string>
     <string name="title_activity_endpage">Endpage</string>
     <string name="singup"><u>Sign Up</u> For PicShake</string>
