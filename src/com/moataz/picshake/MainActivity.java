@@ -16,6 +16,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -194,6 +195,8 @@ public class MainActivity extends Activity {
             	startActivity(intent);
             	finish();
 	            return true;
+	        case R.id.action_info:
+	        	Utils.showAlert("About PicShake", "<p>Version Beta 1.0</p><p>PicShake</p><p>Copyright 2014 Valyria Inc. All rights reserved.</p><p>This is only a non official Beta Version of the app</p><p><a href='http://hezzapp.appspot.com/terms'>Terms of Use</a></p><p><a href='http://hezzapp.appspot.com/privacy'>Privacy Policy</a></p>", MainActivity.this);
 	        default:
 	            return super.onOptionsItemSelected(item);
 	    }

@@ -98,7 +98,7 @@ AccelerometerListener {
 	public final static int RESULT_LOAD_IMAGE = 5000;
 	private static final int CAMERA_CAPTURE_IMAGE_REQUEST_CODE = 100;
     public static final int MEDIA_TYPE_IMAGE = 1;
-    private static final String IMAGE_DIRECTORY_NAME = "Hello Camera";
+    private static final String IMAGE_DIRECTORY_NAME = "Camera";
     private Uri fileUri; // file url to store image/video
 //	private Button uploadButton;
     private int serverResponseCode = 0;
@@ -329,7 +329,7 @@ AccelerometerListener {
 	    // External sdcard location
 	    File mediaStorageDir = new File(
 	            Environment
-	                    .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+	                    .getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
 	            IMAGE_DIRECTORY_NAME);
 	 
 	    // Create the storage directory if it does not exist
@@ -351,7 +351,6 @@ AccelerometerListener {
 	    } else {
 	        return null;
 	    }
-	 
 	    return mediaFile;
 	}
 
@@ -508,9 +507,9 @@ AccelerometerListener {
                 // display it in image view
 //                previewCapturedImage();
 				String picturePath = fileUri.getPath();
+				new SingleMediaScanner(SenderActivity.this, new File(picturePath));
 //				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
 				BitmapFactory.Options options = new BitmapFactory.Options();
-				 
 	            // downsizing image as it throws OutOfMemory Exception for larger
 	            // images
 	            options.inSampleSize = 8;
@@ -1237,13 +1236,20 @@ AccelerometerListener {
 	public void onShake(float force) {
 
 		if(passcode.length()>0) {
-    		if(photoPathsList.size() > 0)
-    			new UploadImage().execute(photoPathsList);
-    		else
-    			Toast.makeText(getApplicationContext(),
-	                    "No Pictures Selected",
-	                    Toast.LENGTH_SHORT).show();
-    	}
+			if(passcode.getText().toString().contains("$"))
+			{
+				Toast.makeText(getApplicationContext(),
+						"Passcode cannot contain dollar sign characters $",
+						Toast.LENGTH_SHORT).show();
+			}else{
+				if(photoPathsList.size() > 0)
+					new UploadImage().execute(photoPathsList);
+				else
+					Toast.makeText(getApplicationContext(),
+							"No Pictures Selected",
+							Toast.LENGTH_SHORT).show();
+			}
+		}
 
 	}
 

@@ -12,6 +12,11 @@
           android:icon="@drawable/systemlogoutt"
           android:title="logout"
           android:showAsAction="always" />
+    
+    <item android:id="@+id/action_info"
+          android:icon="@drawable/ic_action_help"
+          android:title="About"
+          android:showAsAction="always" />
     </menu>
     </item>
 </menu>

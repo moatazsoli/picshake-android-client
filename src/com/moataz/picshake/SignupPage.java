@@ -17,13 +17,17 @@ import org.apache.http.message.BasicNameValuePair;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class SignupPage extends Activity {
@@ -61,6 +65,13 @@ public class SignupPage extends Activity {
 	    password2 = (EditText) findViewById(R.id.password2);
 	    firstname = (EditText) findViewById(R.id.firstname);
 	    lastname = (EditText) findViewById(R.id.lastname);
+	    
+	    
+	    TextView textView =(TextView)findViewById(R.id.textView1);
+	    textView.setClickable(true);
+	    textView.setMovementMethod(LinkMovementMethod.getInstance());
+	    String text = "By clicking Sign Up, you agree to our <a href='http://hezzapp.appspot.com/terms'>Terms of Use</a> and our <a href='http://hezzapp.appspot.com/privacy'>Privacy Policy</a>";
+	    textView.setText(Html.fromHtml(text));
 	}
 
 	/**
@@ -95,6 +106,18 @@ public class SignupPage extends Activity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
+	
+	public void terms(View view){
+		Intent intent = new Intent(Intent.ACTION_VIEW, 
+			     Uri.parse("http://http://hezzapp.appspot.com/terms"));
+			startActivity(intent);
+	}
+	public void privacy(View view){
+		Intent intent = new Intent(Intent.ACTION_VIEW, 
+			     Uri.parse("http://http://hezzapp.appspot.com/privacy"));
+			startActivity(intent);
+	}
+	
 	
 	public void submit(View view) {
 		

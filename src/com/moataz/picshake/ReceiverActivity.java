@@ -161,7 +161,7 @@ AccelerometerListener {
 		
 		//setting up and hiding the GridView
 		mGrid = (GridView) findViewById(R.id.gridView1);
-		textView1 = (TextView) findViewById(R.id.textView1);
+		textView1 = (TextView) findViewById(R.id.textView2);
 		mGrid.setVisibility(View.GONE);
 		
 		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark22)).getBitmap();
@@ -233,7 +233,7 @@ AccelerometerListener {
 		mGrid.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
 		mGrid.setMultiChoiceModeListener(new MultiChoiceModeListener());
 		Toast.makeText(ReceiverActivity.this, "Press and Hold to Select the Pictures", 
-				Toast.LENGTH_SHORT).show();
+				Toast.LENGTH_LONG).show();
 
 	}
 
@@ -1085,11 +1085,17 @@ AccelerometerListener {
 		//		Toast.makeText(getBaseContext(), "Motion detected", 
 		//				Toast.LENGTH_SHORT).show();
 		if (!passcode.getText().toString().equals("")) {
-//			Toast.makeText(getBaseContext(),
-//					"Previewing Images... Please wait", Toast.LENGTH_LONG)
-//					.show();
-			new GetImageUrls().execute();
-			// STEP 1 : getting URLS and info
+			if(passcode.getText().toString().contains("$"))
+			{
+				Toast.makeText(getApplicationContext(),
+						"Passcode cannot contain dollar sign characters $",
+						Toast.LENGTH_SHORT).show();
+			}else{
+				//					"Previewing Images... Please wait", Toast.LENGTH_LONG)
+				//					.show();
+				new GetImageUrls().execute();
+				// STEP 1 : getting URLS and info
+			}
 		} else {
 			Toast.makeText(getBaseContext(), "Please Enter a Passcode",
 					Toast.LENGTH_SHORT).show();

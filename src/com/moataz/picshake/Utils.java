@@ -2,6 +2,9 @@ package com.moataz.picshake;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
+import android.widget.TextView;
 
 
 public final class Utils {
@@ -10,13 +13,19 @@ public final class Utils {
 	 * Function to show alert dialog
 	 * */
 	public static void showAlert(String aInTitle, String aInMessage, Context aInContext){
+		 final TextView message = new TextView(aInContext);
+		  // i.e.: R.string.dialog_message =>
+		            // "Test this dialog following the link to dtmilano.blogspot.com"
+		  message.setText(Html.fromHtml(aInMessage));
+		  message.setClickable(true);
+		  message.setMovementMethod(LinkMovementMethod.getInstance());
+		
 		AlertDialog.Builder alertDialog = new AlertDialog.Builder(aInContext);
-   	 
         // Setting Dialog Title
         alertDialog.setTitle(aInTitle);
- 
+        alertDialog.setView(message);
         // Setting Dialog Message
-        alertDialog.setMessage(aInMessage);
+        //alertDialog.setMessage(Html.fromHtml(aInMessage));
  
         // on pressing cancel button
         alertDialog.setNegativeButton("Ok", new DialogInterface.OnClickListener() {

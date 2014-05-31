@@ -7,6 +7,8 @@
     <string name="title_activity_display_page">DisplayPage</string>
     <string name="title_activity_endpage">Endpage</string>
     <string name="singup"><u>Sign Up</u> For PicShake</string>
+    <string name="terms">By clicking Sign Up, you agree to our Terms of Use and our </string>
+    <string name="privacy">Privacy Policy</string>
     <!-- Main Activity Buttons -->
     <string name="send_button">Add from Existing</string>
     <string name="receive_button">Receive</string>
