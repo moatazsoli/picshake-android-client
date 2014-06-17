@@ -5,16 +5,20 @@ import android.app.ActionBar;
 import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -24,10 +28,14 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
 	
+	static int countDemo = 1;
+
     SecurePreferences preferences;
     private ProgressDialog progressDialog;
     private final String _USERNAME_ = "userId";
@@ -40,6 +48,16 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		//TODO:remove these checks and move them only to send
 		// activity when the offline token is implemented
+		
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		if(!prefs.getBoolean("firstTime", false)) {
+
+			showActivityOverlay();
+		    SharedPreferences.Editor editor = prefs.edit();
+		    editor.putBoolean("firstTime", true);
+		    editor.commit();
+		    
+		}
 		if (!isGPSEnabled()) {
 			showGpsSettingsAlert();
 		}
@@ -146,6 +164,67 @@ public class MainActivity extends Activity {
         // Showing Alert Message
         alertDialog.show();
 	}
+	
+	private void showActivityOverlay() {
+		final Dialog dialog = new Dialog(this,
+		android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+
+		dialog.setContentView(R.layout.overlay_activity);
+
+		final LinearLayout layout = (LinearLayout) dialog
+		.findViewById(R.id.llOverlay_activity);
+//		ImageView img = (ImageView) findViewById(R.drawable.startup1);
+//		layout.addView(img);
+		ImageView im =  (ImageView) dialog.findViewById(R.id.ivOverlayEntertask);
+		im.setImageResource(R.drawable.startup1);
+		layout.removeAllViews();
+		layout.addView(im);
+		layout.setBackgroundColor(Color.TRANSPARENT);
+		layout.setOnClickListener(new OnClickListener() {
+
+		@Override
+		public void onClick(View arg0) {
+			ImageView im =  (ImageView) dialog.findViewById(R.id.ivOverlayEntertask);
+			layout.removeAllViews();
+			countDemo++;
+			switch (countDemo){
+			
+				case 2:
+					im.setImageResource(R.drawable.startup2);					
+					layout.addView(im);
+					break;
+				case 3:
+					im.setImageResource(R.drawable.startup3);					
+					layout.addView(im);
+					break;
+				case 4:
+					im.setImageResource(R.drawable.startup4);					
+					layout.addView(im);
+					break;
+				case 5:
+					im.setImageResource(R.drawable.startup5);					
+					layout.addView(im);
+					break;
+				case 6:
+					im.setImageResource(R.drawable.startup6);					
+					layout.addView(im);
+					break;
+				case 7:
+					im.setImageResource(R.drawable.startup7);					
+					layout.addView(im);
+					break;
+				default:
+					dialog.dismiss();
+				
+			}
+			
+
+		}
+
+		});
+
+		dialog.show();
+		}
 	
 	public void showNoInternetSettingsAlert(){
 		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
