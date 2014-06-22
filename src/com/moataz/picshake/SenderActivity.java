@@ -29,6 +29,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -53,10 +55,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -65,6 +69,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -98,7 +106,11 @@ AccelerometerListener {
 	public final static int RESULT_LOAD_IMAGE = 5000;
 	private static final int CAMERA_CAPTURE_IMAGE_REQUEST_CODE = 100;
     public static final int MEDIA_TYPE_IMAGE = 1;
+    public static final int SMALL=25;
+    public static final int MEDUIM=50;
+    public static final int ACTUAL=100;
     private static final String IMAGE_DIRECTORY_NAME = "Camera";
+    
     private Uri fileUri; // file url to store image/video
 //	private Button uploadButton;
     private int serverResponseCode = 0;
@@ -133,6 +145,8 @@ AccelerometerListener {
 	
 	
 	private NotificationManager notificationManager;
+	
+	private int imageSize = ACTUAL;
 
 	/*
 	 * Initialize the Activity
@@ -502,6 +516,34 @@ AccelerometerListener {
 		
 		case CAMERA_CAPTURE_IMAGE_REQUEST_CODE:
 			if (resultCode == RESULT_OK) {
+				
+				final Dialog dialog = new Dialog(this);
+				dialog.setTitle("Choose Image Size");
+				dialog.setContentView(R.layout.imagesize);
+				dialog.show();
+			
+				RadioGroup group = (RadioGroup) dialog.findViewById(R.id.radioGroup);
+				
+				group.setOnCheckedChangeListener(new OnCheckedChangeListener() 
+		        {
+
+		            public void onCheckedChanged(RadioGroup group, int checkedId) 
+		            {
+		                // TODO Auto-generated method stub
+		                if(R.id.small == checkedId)
+		                {
+		                	Toast.makeText(SenderActivity.this, "small", Toast.LENGTH_SHORT).show();
+		                	imageSize = SMALL;		 
+		                }else if(R.id.medium == checkedId){
+		                	Toast.makeText(SenderActivity.this, "medium", Toast.LENGTH_SHORT).show();
+		                	imageSize = MEDUIM;
+		                }else if(R.id.actual == checkedId){
+		                	Toast.makeText(SenderActivity.this, "actual", Toast.LENGTH_SHORT).show();
+		                	imageSize = ACTUAL;
+		                }
+		                dialog.dismiss();
+		            }
+		        });
 				
                 // successfully captured the image
                 // display it in image view
@@ -977,8 +1019,9 @@ AccelerometerListener {
 //				});                
 //			}   
 
+
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			bmToUpload.compress(CompressFormat.JPEG, 100, bos);
+			bmToUpload.compress(CompressFormat.JPEG, imageSize, bos);
 			byte[] data = bos.toByteArray();
 			HttpPost postRequest = new HttpPost(uploadURL);
 			//    "http://hezzapp.appspot.com/_ah/upload/AMmfu6ZVSlpuF4VCQyW6D-SytsfCEC79yyS66YRi5aZApJmmVtFn1sL8xHgCiv5SDeuUB4h0VHW28ehwedWGnKAf2QfbQBlt9wMqhBvt9yR4Q12ovqrwgC0/ALBNUaYAAAAAUvrywvX7Sb3dDVb_oI77Wqyt5qUUoIoY/");
@@ -1116,8 +1159,6 @@ AccelerometerListener {
                
 				}   
 				picUploadUrl = s1.toString();
-
-
 				
 				//			String picPath = params[0];
 				for (Iterator iterator = pathsList.iterator(); iterator.hasNext();) {

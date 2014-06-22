@@ -303,12 +303,13 @@ containing a value of this type.
     }
     public static final class id {
         public static final int LinearLayout1=0x7f0a0008;
-        public static final int action_info=0x7f0a002c;
-        public static final int action_logout=0x7f0a002b;
-        public static final int action_settings=0x7f0a002a;
+        public static final int action_info=0x7f0a0030;
+        public static final int action_logout=0x7f0a002f;
+        public static final int action_settings=0x7f0a002e;
+        public static final int actual=0x7f0a0027;
         public static final int btnGalleryOk=0x7f0a001e;
-        public static final int btnGalleryPick=0x7f0a0026;
-        public static final int btnGalleryPickMul=0x7f0a0027;
+        public static final int btnGalleryPick=0x7f0a002a;
+        public static final int btnGalleryPickMul=0x7f0a002b;
         public static final int button1=0x7f0a000f;
         public static final int button2=0x7f0a0011;
         public static final int email=0x7f0a0018;
@@ -321,14 +322,15 @@ containing a value of this type.
         public static final int imgNoMedia=0x7f0a001c;
         public static final int imgQueue=0x7f0a0020;
         public static final int imgQueueMultiSelected=0x7f0a0021;
-        public static final int imgSinglePick=0x7f0a0025;
-        public static final int ivOverlayEntertask=0x7f0a0029;
+        public static final int imgSinglePick=0x7f0a0029;
+        public static final int ivOverlayEntertask=0x7f0a002d;
         public static final int keepmesignedin=0x7f0a0010;
         public static final int label=0x7f0a0023;
         public static final int lastname=0x7f0a0014;
         public static final int linearLayout1=0x7f0a0012;
         public static final int llBottomContainer=0x7f0a001d;
-        public static final int llOverlay_activity=0x7f0a0028;
+        public static final int llOverlay_activity=0x7f0a002c;
+        public static final int medium=0x7f0a0026;
         public static final int none=0x7f0a0000;
         public static final int normal=0x7f0a0001;
         public static final int passcode=0x7f0a000c;
@@ -336,9 +338,11 @@ containing a value of this type.
         public static final int password1=0x7f0a0016;
         public static final int password1in=0x7f0a000e;
         public static final int password2=0x7f0a0017;
+        public static final int radioGroup=0x7f0a0024;
         public static final int receiveActivityButton=0x7f0a0005;
         public static final int satellite=0x7f0a0002;
         public static final int sendActivityButton=0x7f0a0007;
+        public static final int small=0x7f0a0025;
         public static final int submit=0x7f0a001a;
         public static final int takePicButton=0x7f0a0006;
         public static final int terrain=0x7f0a0003;
@@ -346,7 +350,7 @@ containing a value of this type.
         public static final int textView2=0x7f0a0009;
         public static final int username=0x7f0a0015;
         public static final int usernamein=0x7f0a000d;
-        public static final int viewSwitcher=0x7f0a0024;
+        public static final int viewSwitcher=0x7f0a0028;
     }
     public static final class integer {
         public static final int google_play_services_version=0x7f0b0000;
@@ -360,9 +364,10 @@ containing a value of this type.
         public static final int activity_splashscreen=0x7f030005;
         public static final int gallery=0x7f030006;
         public static final int gallery_item=0x7f030007;
-        public static final int main=0x7f030008;
-        public static final int overlay_activity=0x7f030009;
-        public static final int titlebar=0x7f03000a;
+        public static final int imagesize=0x7f030008;
+        public static final int main=0x7f030009;
+        public static final int overlay_activity=0x7f03000a;
+        public static final int titlebar=0x7f03000b;
     }
     public static final class menu {
         public static final int main=0x7f0c0000;
