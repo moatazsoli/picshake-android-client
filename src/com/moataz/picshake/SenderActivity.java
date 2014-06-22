@@ -637,6 +637,35 @@ AccelerometerListener {
 			if (resultCode == RESULT_OK && null != intent) {
 //				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
 //				mImageView.setVisibility(View.INVISIBLE);
+				
+				final Dialog dialog = new Dialog(this);
+				dialog.setTitle("Choose Image Size");
+				dialog.setContentView(R.layout.imagesize);
+				dialog.show();
+			
+				RadioGroup group = (RadioGroup) dialog.findViewById(R.id.radioGroup);
+				
+				group.setOnCheckedChangeListener(new OnCheckedChangeListener() 
+		        {
+
+		            public void onCheckedChanged(RadioGroup group, int checkedId) 
+		            {
+		                // TODO Auto-generated method stub
+		                if(R.id.small == checkedId)
+		                {
+		                	Toast.makeText(SenderActivity.this, "small", Toast.LENGTH_SHORT).show();
+		                	imageSize = SMALL;		 
+		                }else if(R.id.medium == checkedId){
+		                	Toast.makeText(SenderActivity.this, "medium", Toast.LENGTH_SHORT).show();
+		                	imageSize = MEDUIM;
+		                }else if(R.id.actual == checkedId){
+		                	Toast.makeText(SenderActivity.this, "actual", Toast.LENGTH_SHORT).show();
+		                	imageSize = ACTUAL;
+		                }
+		                dialog.dismiss();
+		            }
+		        });
+				
 				String[] all_path = intent.getStringArrayExtra("all_path");
 				int lSize = all_path.length;
 				if(lSize == 0)
