@@ -930,8 +930,12 @@ AccelerometerListener {
 			bmToUpload.compress(CompressFormat.JPEG, imageSize, bos);
 			byte[] data = bos.toByteArray();
 			HttpPost postRequest = new HttpPost(uploadURL);
-			ByteArrayBody bab = new ByteArrayBody(data, "image/jpeg","testimage.jpg");
-
+			if(username == null)
+			{
+				username = "";
+			}
+			ByteArrayBody bab = new ByteArrayBody(data, "image/jpeg","image-"+username+".jpg");
+			
 			final long totalSize= bab.getContentLength();
 			CustomMultiPartEntity reqEntity = new CustomMultiPartEntity(new ProgressListener()
 			{
@@ -952,7 +956,13 @@ AccelerometerListener {
 			reqEntity.addPart("passcode", new StringBody(passcode.getText().toString()));
 			reqEntity.addPart("longitude", new StringBody(mLongitude));
 			reqEntity.addPart("latitude", new StringBody(mLatitude));
-			reqEntity.addPart("cameraorgallery", new StringBody(selectOrCamera+""));
+			if(selectOrCamera == 0)
+			{
+				reqEntity.addPart("picsource", new StringBody("gallery"));
+			}else if(selectOrCamera == 1){
+				reqEntity.addPart("picsource", new StringBody("camera"));
+			}
+			reqEntity.addPart("imagesize", new StringBody(imageSize+""));
 			if(username != null && !username.equals(""))
 			{
 				reqEntity.addPart("username", new StringBody(username));

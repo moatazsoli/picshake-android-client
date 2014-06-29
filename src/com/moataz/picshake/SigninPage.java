@@ -65,7 +65,6 @@ public class SigninPage extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_signin_page);
 		// Show the Up button in the action bar.
-		setupActionBar();
 		
 		boolean resume = true;
 		if (!isGPSEnabled()) {
@@ -100,14 +99,7 @@ public class SigninPage extends Activity {
 			}
 	}
 
-	/**
-	 * Set up the {@link android.app.ActionBar}.
-	 */
-	private void setupActionBar() {
 
-		getActionBar().setDisplayHomeAsUpEnabled(true);
-
-	}
 	
 	public boolean isGPSEnabled(){
 		// flag for GPS status

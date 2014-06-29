@@ -23,6 +23,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
@@ -102,6 +103,10 @@ AccelerometerListener {
 	// Progress dialog type (0 - for Horizontal progress bar)
     public static final int progress_bar_type = 0; 
 
+    private final String _SAVEDUSER_ = "saveduser";
+	private SecurePreferences preferences;
+	private String username;
+	
 	private TextView messageText;
 	private Button uploadButton;
     private int serverResponseCode = 0;
@@ -158,6 +163,9 @@ AccelerometerListener {
 		setContentView(R.layout.activity_receiver);
 		// Show the Up button in the action bar.
 		setupActionBar();
+		
+		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
+		username = preferences.getString(_SAVEDUSER_);
 		
 		//setting up and hiding the GridView
 		mGrid = (GridView) findViewById(R.id.gridView1);
@@ -1143,6 +1151,11 @@ AccelerometerListener {
 			nameValuePairs.add(new BasicNameValuePair("passcode", passcode.getText().toString()));
 			nameValuePairs.add(new BasicNameValuePair("latitude", getLat()));
 			nameValuePairs.add(new BasicNameValuePair("longitude", getLng()));
+			if(username != null && !username.equals(""))
+			{
+				nameValuePairs.add(new BasicNameValuePair("username", username));
+			}
+			
 			String paramsString = URLEncodedUtils.format(nameValuePairs, "UTF-8");
 			
 			String downloadUrl="";
