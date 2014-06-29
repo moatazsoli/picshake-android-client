@@ -37,6 +37,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
@@ -47,8 +48,11 @@ import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
+import android.location.LocationManager;
 import android.media.Image;
 import android.media.RingtoneManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.opengl.GLES10;
 import android.os.AsyncTask;
@@ -92,7 +96,10 @@ LocationListener,
 GooglePlayServicesClient.ConnectionCallbacks,
 GooglePlayServicesClient.OnConnectionFailedListener,
 AccelerometerListener {
-
+	
+	private final String _SAVEDUSER_ = "saveduser";
+	private SecurePreferences preferences;
+	private String username;
 	// A request to connect to Location Services
 	private LocationRequest mLocationRequest;
 	
@@ -100,6 +107,8 @@ AccelerometerListener {
 	private GalleryAdapter adapter;
 	public final static int RESULT_LOAD_MULTI_IMAGES = 200;
 	
+	
+	private int selectOrCamera = 1;
 	//Max size of bitmap that can be stored 
 	int[] maxBitmapSize;
 	
@@ -108,7 +117,7 @@ AccelerometerListener {
     public static final int MEDIA_TYPE_IMAGE = 1;
     public static final int SMALL=25;
     public static final int MEDUIM=50;
-    public static final int ACTUAL=100;
+    public static final int ORIGINAL=100;
     private static final String IMAGE_DIRECTORY_NAME = "Camera";
     
     private Uri fileUri; // file url to store image/video
@@ -146,7 +155,7 @@ AccelerometerListener {
 	
 	private NotificationManager notificationManager;
 	
-	private int imageSize = ACTUAL;
+	private int imageSize = ORIGINAL;
 
 	/*
 	 * Initialize the Activity
@@ -157,50 +166,18 @@ AccelerometerListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_sender);
 		
+		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
+		username = preferences.getString(_SAVEDUSER_);
 		maxBitmapSize = new int[1]; 
 
 		//Get the max bitmap size this hardware can store
 		GLES10.glGetIntegerv(GL10.GL_MAX_TEXTURE_SIZE, maxBitmapSize, 0);
-//		Toast.makeText(SenderActivity.this, "max Size: " + maxBitmapSize[0], 
-//				Toast.LENGTH_SHORT).show();
-		
+
 		photoPathsList = new ArrayList<String>();
 		Intent mIntent = getIntent();
-		int selectOrCamera = mIntent.getIntExtra("selectOrCamera", 0);
-		// Upload stuff
-//		uploadButton = (Button)findViewById(R.id.send_button);
-//		Button buttonLoadImage = (Button) findViewById(R.id.select_pic);
+		selectOrCamera = mIntent.getIntExtra("selectOrCamera", 1);
         passcode = (EditText)findViewById(R.id.passcode);
         
-//        uploadButton.setOnClickListener(new OnClickListener() {            
-//            @Override
-//            public void onClick(View v) {
-////            	 try {
-
-////                     bm = BitmapFactory.decodeFile(picture_path);
-////                     
-////                 } catch (Exception e) {
-////                     Log.e(e.getClass().getName(), e.getMessage());
-////                 }
-//            	
-//               // dialog = ProgressDialog.show(SenderActivity.this, "", "Uploading file...", true);
-////                stopUpdates();
-//            	if(passcode.length()>0) {
-//            		if(photoPathsList.size() > 0)
-//            			new UploadImage().execute(photoPathsList);
-//            		else
-//            			Toast.makeText(getApplicationContext(),
-//        	                    "No Pictures Selected",
-//        	                    Toast.LENGTH_SHORT).show();
-//            	}
-//                                                     
-//                }
-//            });	
-
-        
-		//***
-		
-		// Get handles to the UI view objects
 
 		// Create a new global location parameters object
 		mLocationRequest = LocationRequest.create();
@@ -230,6 +207,11 @@ AccelerometerListener {
 		 * handle callbacks.
 		 */
 		mLocationClient = new LocationClient(this, this, this);
+		
+		if(!mLocationClient.isConnected() || !mLocationClient.isConnecting())
+		{
+			connectAndStartLocationUpdates();
+		}
 		//connectAndStartLocationUpdates();
         if(selectOrCamera == 1)
 		{
@@ -238,7 +220,6 @@ AccelerometerListener {
 	                    "Sorry! Your device doesn't support camera",
 	                    Toast.LENGTH_LONG).show();
 			}else{
-//				buttonLoadImage.setVisibility(View.GONE);
 				captureImage();
 			}
 		}else{
@@ -246,31 +227,7 @@ AccelerometerListener {
 			Intent intent = new Intent();
 			intent.setAction(com.luminous.pick.Action.ACTION_MULTIPLE_PICK);
 			startActivityForResult(intent, RESULT_LOAD_MULTI_IMAGES);
-			
-//	        buttonLoadImage.setOnClickListener(new View.OnClickListener() {
-//				
-//				@Override
-//				public void onClick(View arg0) {
-////					startUpdates();
-////					Intent i = new Intent(
-////							Intent.ACTION_PICK,
-////							android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-////					
-////					startActivityForResult(i, RESULT_LOAD_IMAGE);
-//					Intent intent = new Intent();
-//					intent.setAction(com.luminous.pick.Action.ACTION_MULTIPLE_PICK);
-//					startActivityForResult(intent, RESULT_LOAD_MULTI_IMAGES);
-//				}
-//			});
 		}
-        
-//
-//		 if (AccelerometerManager.isSupported(this)) {
-////          Toast.makeText(getBaseContext(), "onResume Accelerometer Started", 
-////    		Toast.LENGTH_LONG).show();
-//        	//Start Accelerometer Listening
-//			AccelerometerManager.startListening(this);
-//        }
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         
@@ -288,7 +245,6 @@ AccelerometerListener {
 	    fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
 	 
 	    intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
-	 
 	    // start the image capture Intent
 	    startActivityForResult(intent, CAMERA_CAPTURE_IMAGE_REQUEST_CODE);
 	}
@@ -435,8 +391,6 @@ AccelerometerListener {
 		if (AccelerometerManager.isListening()) {
 			//Start Accelerometer Listening
 			AccelerometerManager.stopListening();
-			//			Toast.makeText(getBaseContext(), "onDestroy Accelerometer Stoped", 
-			//					Toast.LENGTH_LONG).show();
 		}	
 		super.onPause();
 		
@@ -526,7 +480,6 @@ AccelerometerListener {
 				
 				group.setOnCheckedChangeListener(new OnCheckedChangeListener() 
 		        {
-
 		            public void onCheckedChanged(RadioGroup group, int checkedId) 
 		            {
 		                // TODO Auto-generated method stub
@@ -538,19 +491,16 @@ AccelerometerListener {
 		                	Toast.makeText(SenderActivity.this, "medium", Toast.LENGTH_SHORT).show();
 		                	imageSize = MEDUIM;
 		                }else if(R.id.actual == checkedId){
-		                	Toast.makeText(SenderActivity.this, "actual", Toast.LENGTH_SHORT).show();
-		                	imageSize = ACTUAL;
+		                	Toast.makeText(SenderActivity.this, "original", Toast.LENGTH_SHORT).show();
+		                	imageSize = ORIGINAL;
 		                }
 		                dialog.dismiss();
 		            }
 		        });
 				
                 // successfully captured the image
-                // display it in image view
-//                previewCapturedImage();
 				String picturePath = fileUri.getPath();
 				new SingleMediaScanner(SenderActivity.this, new File(picturePath));
-//				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
 				BitmapFactory.Options options = new BitmapFactory.Options();
 	            // downsizing image as it throws OutOfMemory Exception for larger
 	            // images
@@ -577,8 +527,8 @@ AccelerometerListener {
 //
 //			    Bitmap bitmap = BitmapFactory.decodeFile(picturePath, bmOptions);
 //			    mImageView.setImageBitmap(bitmap);
+	            
 	            photoPathsList.add(picturePath);
-//			    picture_path = picturePath;
 			    
             } else if (resultCode == RESULT_CANCELED) {
                 // user cancelled Image capture
@@ -594,49 +544,10 @@ AccelerometerListener {
             }
 			break;
 			
-//		case RESULT_LOAD_IMAGE:
-//			super.onActivityResult(requestCode, resultCode, intent);
-//			if (resultCode == RESULT_OK && null != intent) {
-//				Uri selectedImage = intent.getData();
-//				String[] filePathColumn = { MediaStore.Images.Media.DATA };
-//
-//				Cursor cursor = getContentResolver().query(selectedImage,
-//						filePathColumn, null, null, null);
-//				cursor.moveToFirst();
-//
-//				int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-//				String picturePath = cursor.getString(columnIndex);
-//				cursor.close();
-////				System.out.println("ASDFASDF");
-//				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
-//				int targetW = mImageView.getWidth();
-//				int targetH = mImageView.getHeight();
-//				BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-//				bmOptions.inJustDecodeBounds = true;
-//			    BitmapFactory.decodeFile(picturePath, bmOptions);
-//			    int photoW = bmOptions.outWidth;
-//			    int photoH = bmOptions.outHeight;
-//			    int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
-//
-//			    // Decode the image file into a Bitmap sized to fill the View
-//			    bmOptions.inJustDecodeBounds = false;
-//			    bmOptions.inSampleSize = scaleFactor;
-//			    bmOptions.inPurgeable = true;
-//
-//			    Bitmap bitmap = BitmapFactory.decodeFile(picturePath, bmOptions);
-//			    mImageView.setImageBitmap(bitmap);
-//			    photoPathsList.add(picturePath);
-////			    picture_path = picturePath;
-//				break;
-//				//imageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
-//			}
-			
 		case RESULT_LOAD_MULTI_IMAGES:
 			super.onActivityResult(requestCode, resultCode, intent);
 			
 			if (resultCode == RESULT_OK && null != intent) {
-//				ImageView mImageView = (ImageView) findViewById(R.id.imgView);
-//				mImageView.setVisibility(View.INVISIBLE);
 				
 				final Dialog dialog = new Dialog(this);
 				dialog.setTitle("Choose Image Size");
@@ -659,8 +570,8 @@ AccelerometerListener {
 		                	Toast.makeText(SenderActivity.this, "medium", Toast.LENGTH_SHORT).show();
 		                	imageSize = MEDUIM;
 		                }else if(R.id.actual == checkedId){
-		                	Toast.makeText(SenderActivity.this, "actual", Toast.LENGTH_SHORT).show();
-		                	imageSize = ACTUAL;
+		                	Toast.makeText(SenderActivity.this, "original", Toast.LENGTH_SHORT).show();
+		                	imageSize = ORIGINAL;
 		                }
 		                dialog.dismiss();
 		            }
@@ -668,6 +579,7 @@ AccelerometerListener {
 				
 				String[] all_path = intent.getStringArrayExtra("all_path");
 				int lSize = all_path.length;
+				
 				if(lSize == 0)
 				{
 					Toast.makeText(SenderActivity.this, "Please Select At Least 1 Picture", 
@@ -683,11 +595,6 @@ AccelerometerListener {
 				}
 				
 				ArrayList<CustomGallery> dataT = new ArrayList<CustomGallery>();
-				
-				//SHould be in Create method
-				//adapter=new GalleryAdapter(this, ImageLoader.getInstance(), new String[]{});
-				//grid = (GridView) findViewById(R.id.gridView);
-				//grid.setAdapter(adapter);
 				
 				for (String string : all_path) {
 					CustomGallery item = new CustomGallery();
@@ -1019,47 +926,12 @@ AccelerometerListener {
 	public int uploadFile(Bitmap bmToUpload, String uploadURL, HttpClient httpClient) {
 
 		try {
-//			HttpClient httpClient = new DefaultHttpClient();
-//			HttpGet getRequest = new HttpGet();
-//			try {
-//				getRequest.setURI(new URI("http://hezzapp.appspot.com/getuploadurl"));
-//			} catch (URISyntaxException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//			HttpResponse getresponse = httpClient.execute(getRequest);
-//			serverResponseCode = getresponse.getStatusLine().getStatusCode();
-//			BufferedReader reader1 = new BufferedReader(new InputStreamReader(
-//					getresponse.getEntity().getContent(), "UTF-8"));
-//			String sResponse1;
-//			StringBuilder s1 = new StringBuilder();
-//
-//			while ((sResponse1 = reader1.readLine()) != null) {
-//				s1 = s1.append(sResponse1);
-//			}
-//			if(serverResponseCode == 200){
-//
-//				runOnUiThread(new Runnable() {
-//					public void run() {
-//						String msg = "Got URL";
-//						Toast.makeText(SenderActivity.this, "GOT URL!!", 
-//								Toast.LENGTH_SHORT).show();
-//					}
-//				});                
-//			}   
-
-
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			bmToUpload.compress(CompressFormat.JPEG, imageSize, bos);
 			byte[] data = bos.toByteArray();
 			HttpPost postRequest = new HttpPost(uploadURL);
-			//    "http://hezzapp.appspot.com/_ah/upload/AMmfu6ZVSlpuF4VCQyW6D-SytsfCEC79yyS66YRi5aZApJmmVtFn1sL8xHgCiv5SDeuUB4h0VHW28ehwedWGnKAf2QfbQBlt9wMqhBvt9yR4Q12ovqrwgC0/ALBNUaYAAAAAUvrywvX7Sb3dDVb_oI77Wqyt5qUUoIoY/");
 			ByteArrayBody bab = new ByteArrayBody(data, "image/jpeg","testimage.jpg");
-			// File file= new File("/mnt/sdcard/forest.png");
-			// FileBody bin = new FileBody(file);
-			
-//			MultipartEntity reqEntity = new MultipartEntity(
-//					HttpMultipartMode.BROWSER_COMPATIBLE);
+
 			final long totalSize= bab.getContentLength();
 			CustomMultiPartEntity reqEntity = new CustomMultiPartEntity(new ProgressListener()
 			{
@@ -1080,6 +952,12 @@ AccelerometerListener {
 			reqEntity.addPart("passcode", new StringBody(passcode.getText().toString()));
 			reqEntity.addPart("longitude", new StringBody(mLongitude));
 			reqEntity.addPart("latitude", new StringBody(mLatitude));
+			reqEntity.addPart("cameraorgallery", new StringBody(selectOrCamera+""));
+			if(username != null && !username.equals(""))
+			{
+				reqEntity.addPart("username", new StringBody(username));
+			}
+			
 			
 			postRequest.setEntity(reqEntity);
 			HttpResponse response = httpClient.execute(postRequest);
@@ -1093,20 +971,6 @@ AccelerometerListener {
 				s = s.append(sResponse);
 			}
 			System.out.println("Response:" + s);
-
-//			if(serverResponseCode == 200){
-//				passcode.setText("");
-//				runOnUiThread(new Runnable() {
-//					public void run() {
-//
-//						String msg = "File Upload Completed";
-//
-//						messageText.setText(msg);
-//						Toast.makeText(SenderActivity.this, "File Upload Complete.", 
-//								Toast.LENGTH_SHORT).show();
-//					}
-//				});                
-//			}    
 
 		} catch (Exception e) {
 			// handle exception here
@@ -1124,137 +988,285 @@ AccelerometerListener {
 		String picUploadUrl;
 		int count;
 		int size;
+		private final String _SUCESS_ = "600";
+		private final String _FAILED_COORDINATES_ = "601";
+		private final String _FAILED_UPLOAD_URL_ = "602";
+		private final String _FAILED_CONNECTION_ = "603";
+		private boolean noConnection = false;
+		
 		@Override
 		protected void onPreExecute() {
+			
 			if (AccelerometerManager.isListening()) {
 				AccelerometerManager.stopListening();
 	        }
-			
-			count = 1;
-			mProgressDialog = new ProgressDialog(SenderActivity.this);
-			mProgressDialog.setMessage("Uploading Pictures. Please wait...");
-			mProgressDialog.setIndeterminate(false);
-			mProgressDialog.setMax(100);
-			mProgressDialog.setCanceledOnTouchOutside(false);
-			mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-			//later on allow user to cancel and set the button callback to cancel and exit the download process
-			//mProgressDialog.setCancelable(true);
-			mProgressDialog.show();
-			
-			//Store coordinates for all pictures to be uploaded 
-			mLatitude = getLat();
-			mLongitude = getLng();
-			
-			if(null == mLatitude || null == mLongitude ) {
-				Toast.makeText(SenderActivity.this, "Error getting coordinates!!!", 
-						Toast.LENGTH_SHORT).show();
+			if (!isGPSEnabled() || !isNetworkAvailable()) {
+				noConnection = true;
+			}else{
+				count = 1;
+				mProgressDialog = new ProgressDialog(SenderActivity.this);
+				mProgressDialog.setMessage("Uploading Pictures. Please wait...");
+				mProgressDialog.setIndeterminate(false);
+				mProgressDialog.setMax(100);
+				mProgressDialog.setCanceledOnTouchOutside(false);
+				mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				//later on allow user to cancel and set the button callback to cancel and exit the download process
+				//mProgressDialog.setCancelable(true);
+				mProgressDialog.show();
+				
+				//Store coordinates for all pictures to be uploaded 
+				mLatitude = getLat();
+				mLongitude = getLng();
 			}
 		}
 
 		@Override
 		protected String doInBackground(ArrayList<String>... params) {
-			pathsList = params[0];
-			size = pathsList.size();
-			int sent  = 0;
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpGet getRequest = new HttpGet();
-			try {
-				getRequest.setURI(new URI("http://hezzapp.appspot.com/getuploadurl"));
-			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			HttpResponse getresponse;
-			try {
-				getresponse = httpClient.execute(getRequest);
+			if(noConnection)
+			{
+				return _FAILED_CONNECTION_;
+			}else if(mLatitude.equals("") || mLongitude.equals("") ) {
+				return _FAILED_COORDINATES_;
+			}else{
 
-				serverResponseCode = getresponse.getStatusLine().getStatusCode();
-				BufferedReader reader1 = new BufferedReader(new InputStreamReader(
-						getresponse.getEntity().getContent(), "UTF-8"));
-				String sResponse1;
-				StringBuilder s1 = new StringBuilder();
-
-				while ((sResponse1 = reader1.readLine()) != null) {
-					s1 = s1.append(sResponse1);
+				pathsList = params[0];
+				size = pathsList.size();
+				int sent  = 0;
+				HttpClient httpClient = new DefaultHttpClient();
+				HttpGet getRequest = new HttpGet();
+				try {
+					getRequest.setURI(new URI("http://hezzapp.appspot.com/getuploadurl"));
+				} catch (URISyntaxException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-				if(serverResponseCode == 200){
+				HttpResponse getresponse;
+				try {
+					getresponse = httpClient.execute(getRequest);
 
-//					runOnUiThread(new Runnable() {
-//						public void run() {
-//							Toast.makeText(SenderActivity.this, "GOT URL!!", 
-//									Toast.LENGTH_SHORT).show();
-//						}
-//					});                
-               
-				}   
-				picUploadUrl = s1.toString();
-				
-				//			String picPath = params[0];
-				for (Iterator iterator = pathsList.iterator(); iterator.hasNext();) {
-					
-					
-					runOnUiThread(new Runnable() {
-						public void run() {
-							mProgressDialog.setMessage("Uploading Pictures. Please wait... ("+count+"/"+size+")");
-							count++;
-						}
-					});
-					pathTempHolder = (String) iterator.next();
-					try {
-						BitmapFactory.Options bounds = new BitmapFactory.Options();
-						bounds.inJustDecodeBounds = true;
-						bounds.inSampleSize = 1;
-						bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
+					serverResponseCode = getresponse.getStatusLine().getStatusCode();
+					BufferedReader reader1 = new BufferedReader(new InputStreamReader(
+							getresponse.getEntity().getContent(), "UTF-8"));
+					String sResponse1;
+					StringBuilder s1 = new StringBuilder();
 
-						//The image uploading is too large for hte phone to handle, so we must resize to fit phone scale
-						while(bounds.outHeight > maxBitmapSize[0] || bounds.outWidth> maxBitmapSize[0]) {
-							bounds.inSampleSize*=2;
-							bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
-						}
-
-						//Once here, the Image is now a size capable for the device to upload properly
-						bounds.inJustDecodeBounds = false;
-						bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
-						uploadFile(bm, picUploadUrl, httpClient);
-						bm.recycle();
-						bm = null;
-						sent++;
-						showNotification(sent, size);
-
-					} catch (Exception e) {
-						Log.e(e.getClass().getName(), e.getMessage());
+					while ((sResponse1 = reader1.readLine()) != null) {
+						s1 = s1.append(sResponse1);
 					}
+					if(serverResponseCode == 200){
+
+						picUploadUrl = s1.toString();
+
+						//			String picPath = params[0];
+						for (Iterator iterator = pathsList.iterator(); iterator.hasNext();) {
+
+							runOnUiThread(new Runnable() {
+								public void run() {
+									mProgressDialog.setMessage("Uploading Pictures. Please wait... ("+count+"/"+size+")");
+									count++;
+								}
+							});
+							pathTempHolder = (String) iterator.next();
+							try {
+								BitmapFactory.Options bounds = new BitmapFactory.Options();
+								bounds.inJustDecodeBounds = true;
+								bounds.inSampleSize = 1;
+								bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
+
+								//The image uploading is too large for hte phone to handle, so we must resize to fit phone scale
+								while(bounds.outHeight > maxBitmapSize[0] || bounds.outWidth> maxBitmapSize[0]) {
+									bounds.inSampleSize*=2;
+									bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
+								}
+
+								//Once here, the Image is now a size capable for the device to upload properly
+								bounds.inJustDecodeBounds = false;
+								bm = BitmapFactory.decodeFile(pathTempHolder, bounds);
+								uploadFile(bm, picUploadUrl, httpClient);
+								bm.recycle();
+								bm = null;
+								sent++;
+								showNotification(sent, size);
+
+							} catch (Exception e) {
+								Log.e(e.getClass().getName(), e.getMessage());
+							}
+						}
+					}else{
+						return _FAILED_UPLOAD_URL_;
+					}
+				} catch (ClientProtocolException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
 				}
-			} catch (ClientProtocolException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+
+				bm = null;
+				return _SUCESS_;
+
 			}
-			
-			bm = null;
-			return null;
 		}
         
 		@Override
 	    protected void onPostExecute(String result) {
 			mProgressDialog.dismiss();
 			photoPathsList.clear();
-//			picture_path="";
-			if(serverResponseCode == 200){
+			if(result.equals(_FAILED_COORDINATES_)) //can't get coordinates
+			{
+				passcode.setText("");
+				AlertDialog.Builder builder = new AlertDialog.Builder(SenderActivity.this);
+				String message = "Please make sure that your GPS is enabled and your Google Location Settings is enabled as well and try again.";
+				builder.setTitle("Can't Access Location")
+					   .setMessage(message)
+				       .setCancelable(false)
+				       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				        	   finish();
+				           }
+				       });
+				AlertDialog alert = builder.create();
+				alert.show();
+				
+			}else if(result.equals(_FAILED_CONNECTION_)){
+				passcode.setText("");
+				AlertDialog.Builder builder = new AlertDialog.Builder(SenderActivity.this);
+				String message = "Please make sure that your GPS is enabled and your have internet connectivity.";
+				builder.setTitle("Failed Connection")
+					   .setMessage(message)
+				       .setCancelable(false)
+				       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				        	   finish();
+				           }
+				       });
+				AlertDialog alert = builder.create();
+				alert.show();
+			}else if(result.equals(_FAILED_UPLOAD_URL_)){
+				passcode.setText("");
+				runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(SenderActivity.this, "Failed to connect to the server. Please try again later.", 
+								Toast.LENGTH_SHORT).show();
+					}
+				}); 
+				finish();
+			}else if(result.equals(_SUCESS_)){
 				passcode.setText("");
 				runOnUiThread(new Runnable() {
 					public void run() {
 						Toast.makeText(SenderActivity.this, "File Upload Complete.", 
 								Toast.LENGTH_SHORT).show();
 					}
-				});                
+				}); 
+				finish();
 			}
-			finish();
+			
 	    }
 		
 		
+	}
+	
+	public boolean isGPSEnabled(){
+		// flag for GPS status
+		boolean isGPSEnabled = false;
+
+		// flag for network status
+		boolean isNetworkEnabled = false;
+
+		// Declaring a Location Manager
+		LocationManager locationManager = null;
+		// flag for GPS status
+		boolean canGetLocation = false;
+		try {
+			locationManager = (LocationManager) this
+					.getSystemService(LOCATION_SERVICE);
+			// getting GPS status
+			isGPSEnabled = locationManager
+					.isProviderEnabled(LocationManager.GPS_PROVIDER);
+			// getting network status
+			isNetworkEnabled = locationManager
+					.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+			if (!isGPSEnabled && !isNetworkEnabled) {
+				return false;
+			}
+			return true;
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+		
+	}
+	
+	/**
+	 * Function to show settings alert dialog
+	 * On pressing Settings button will lauch Settings Options
+	 * */
+	public void showGpsSettingsAlert(){
+		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+   	 
+        // Setting Dialog Title
+        alertDialog.setTitle("GPS settings");
+ 
+        // Setting Dialog Message
+        alertDialog.setMessage("GPS is not enabled. Do you want to go to settings menu?");
+ 
+        // On pressing Settings button
+        alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int which) {
+            	Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            	startActivity(intent);
+            }
+        });
+ 
+        // on pressing cancel button
+        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+            android.os.Process.killProcess(android.os.Process.myPid());
+            dialog.cancel();
+            }
+        });
+ 
+        // Showing Alert Message
+        alertDialog.show();
+	}
+	
+	public void showNoInternetSettingsAlert(){
+		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+   	 
+        // Setting Dialog Title
+        alertDialog.setTitle("Internet settings");
+ 
+        // Setting Dialog Message
+        alertDialog.setMessage("Internet is not enabled. Do you want to go to settings menu?");
+ 
+        // On pressing Settings button
+        alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int which) {
+            	Intent intent = new Intent(Settings.ACTION_SETTINGS);
+            	startActivity(intent);
+            }
+        });
+ 
+        // on pressing cancel button
+        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+            	android.os.Process.killProcess(android.os.Process.myPid());
+            dialog.cancel();
+            }
+        });
+ 
+        // Showing Alert Message
+        alertDialog.show();
+	}
+	
+	private boolean isNetworkAvailable() {
+	    ConnectivityManager connectivityManager 
+	          = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+	    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+	    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
 	}
 	
 	private void showNotification(int imagesSent, int totalImages) {

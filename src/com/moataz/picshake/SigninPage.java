@@ -66,6 +66,8 @@ public class SigninPage extends Activity {
 		setContentView(R.layout.activity_signin_page);
 		// Show the Up button in the action bar.
 		setupActionBar();
+		
+		boolean resume = true;
 		if (!isGPSEnabled()) {
 			showGpsSettingsAlert();
 		}
@@ -74,29 +76,28 @@ public class SigninPage extends Activity {
 			showNoInternetSettingsAlert();
 		}
 		
-		username = (EditText) findViewById(R.id.usernamein);
-		password = (EditText) findViewById(R.id.password1in);
-		stay_signed = (CheckBox) findViewById(R.id.keepmesignedin);
-		
-		progressDialog = new ProgressDialog(this);
-		progressDialog.setMessage("Signing In...");
-		progressDialog.setIndeterminate(false);
-		
-		progressDialogmsg = new ProgressDialog(this);
-		progressDialogmsg.setMessage("Please wait...");
-		progressDialogmsg.setIndeterminate(false);
-		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
-		checkBoxValue = preferences.getString("CheckBox_Value");
+			username = (EditText) findViewById(R.id.usernamein);
+			password = (EditText) findViewById(R.id.password1in);
+			stay_signed = (CheckBox) findViewById(R.id.keepmesignedin);
 
-		if(checkBoxValue != null && checkBoxValue.equals("1"))
-		{
-			String user = preferences.getString(_USERNAME_);
-			String pass = preferences.getString(_PASSWORD_);
-			username.setText(user);
-			password.setText(pass);
-			stay_signed.setChecked(true);
-			new SignInRequest().execute();
-		}
+			progressDialog = new ProgressDialog(this);
+			progressDialog.setMessage("Signing In...");
+			progressDialog.setIndeterminate(false);
+
+			progressDialogmsg = new ProgressDialog(this);
+			progressDialogmsg.setMessage("Please wait...");
+			progressDialogmsg.setIndeterminate(false);
+			preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
+			checkBoxValue = preferences.getString("CheckBox_Value");
+			if(checkBoxValue != null && checkBoxValue.equals("1"))
+			{
+				String user = preferences.getString(_USERNAME_);
+				String pass = preferences.getString(_PASSWORD_);
+				username.setText(user);
+				password.setText(pass);
+				stay_signed.setChecked(true);
+				new SignInRequest().execute();
+			}
 	}
 
 	/**
@@ -278,46 +279,52 @@ public class SigninPage extends Activity {
  
         @Override
         protected String doInBackground(Void... URL) {
-            HttpClient httpClient = new DefaultHttpClient();
-            HttpPost request = new HttpPost(SIGNIN_URL);
-            
-            _username = username.getText().toString();
-            _password = password.getText().toString();
-            if(_username.equals("") || _password.equals(""))
-            {
-            	return "3004";
-            }
-            try {
-	            List<NameValuePair> postParameters = new ArrayList<NameValuePair>();
-	            postParameters.add(new BasicNameValuePair("username", _username));
-	            postParameters.add(new BasicNameValuePair("password", _password));
-	
-	            UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(
-	                    postParameters);
-	
-	            request.setEntity(formEntity);
-	            HttpResponse postresponse = httpClient.execute(request);
-	            
-	            //set global response to pass to next view
-	            response = postresponse;
-				BufferedReader reader1 = new BufferedReader(new InputStreamReader(
-						postresponse.getEntity().getContent(), "UTF-8"));
-				
-				String sResponse1;
-				StringBuilder s1 = new StringBuilder();
+        	
+        	if(!isNetworkAvailable())
+        	{
+        		return "3005";
+        	}else{
+        		HttpClient httpClient = new DefaultHttpClient();
+        		HttpPost request = new HttpPost(SIGNIN_URL);
 
-				while ((sResponse1 = reader1.readLine()) != null) {
-					s1 = s1.append(sResponse1);
-				}
-				result = s1.toString();
-				
-				return result;
-	            
-            } catch(Exception e) {
-                // Do something about exceptions
-                result = e.getMessage();
-            }
-            return  result;
+        		_username = username.getText().toString();
+        		_password = password.getText().toString();
+        		if(_username.equals("") || _password.equals(""))
+        		{
+        			return "3004";
+        		}
+        		try {
+        			List<NameValuePair> postParameters = new ArrayList<NameValuePair>();
+        			postParameters.add(new BasicNameValuePair("username", _username));
+        			postParameters.add(new BasicNameValuePair("password", _password));
+
+        			UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(
+        					postParameters);
+
+        			request.setEntity(formEntity);
+        			HttpResponse postresponse = httpClient.execute(request);
+
+        			//set global response to pass to next view
+        			response = postresponse;
+        			BufferedReader reader1 = new BufferedReader(new InputStreamReader(
+        					postresponse.getEntity().getContent(), "UTF-8"));
+
+        			String sResponse1;
+        			StringBuilder s1 = new StringBuilder();
+
+        			while ((sResponse1 = reader1.readLine()) != null) {
+        				s1 = s1.append(sResponse1);
+        			}
+        			result = s1.toString();
+
+        			return result;
+
+        		} catch(Exception e) {
+        			// Do something about exceptions
+        			result = e.getMessage();
+        		}
+        		return  result;
+        	}
         }
  
         @Override
@@ -352,6 +359,12 @@ public class SigninPage extends Activity {
         		progressDialog.dismiss();
         		Toast.makeText(getBaseContext(), 
         				getResources().getString(R.string.empty_user_or_pass), 
+        				Toast.LENGTH_LONG).show();
+        		break;
+        	case 3005:
+        		progressDialog.dismiss();
+        		Toast.makeText(getBaseContext(), 
+        				getResources().getString(R.string.no_internet), 
         				Toast.LENGTH_LONG).show();
         		break;
         	default:
