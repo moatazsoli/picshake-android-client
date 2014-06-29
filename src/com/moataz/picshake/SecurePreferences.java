@@ -141,6 +141,13 @@ public class SecurePreferences {
 			putValue(toKey(key), value);
 		}
 	}
+	
+	public void putBoolean(String key, boolean value) {
+		if(value == true)
+			putValue(toKey(key), "1");
+		else
+			putValue(toKey(key), "0");
+	}
 
 	public boolean containsKey(String key) {
 		return preferences.contains(toKey(key));
@@ -156,6 +163,20 @@ public class SecurePreferences {
 			return decrypt(securedEncodedValue);
 		}
 		return null;
+	}
+	
+	public boolean getBoolean(String key, boolean aInDefaultReturn) throws SecurePreferencesException {
+		if (preferences.contains(toKey(key))) {
+			String securedEncodedValue = preferences.getString(toKey(key), "");
+			String _ret = decrypt(securedEncodedValue);
+			if(_ret.equals("1"))
+			{
+				return true;
+			}else{
+				return aInDefaultReturn;
+			}
+		}
+		return aInDefaultReturn;
 	}
 
 	public void clear() {

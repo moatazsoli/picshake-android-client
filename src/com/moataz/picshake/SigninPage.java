@@ -49,7 +49,7 @@ public class SigninPage extends Activity {
 	EditText username;
     EditText password;
     CheckBox stay_signed;
-    String SIGNUP_URL = "http://picshare.biz/customauth/loginme";
+    String SIGNIN_URL = "http://picshare.biz/customauth/loginme";
     HttpResponse response=null;
     private ProgressDialog progressDialog;
     private ProgressDialog progressDialogmsg;
@@ -57,6 +57,9 @@ public class SigninPage extends Activity {
     SecurePreferences preferences;
     private final String _USERNAME_ = "userId";
     private final String _PASSWORD_ = "password";
+    private final String _SAVEDUSER_ = "saveduser";
+    
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -74,26 +77,26 @@ public class SigninPage extends Activity {
 		username = (EditText) findViewById(R.id.usernamein);
 		password = (EditText) findViewById(R.id.password1in);
 		stay_signed = (CheckBox) findViewById(R.id.keepmesignedin);
+		
 		progressDialog = new ProgressDialog(this);
-		// Set progressdialog title
-//		progressDialog.setTitle("Download Image");
-		// Set progressdialog message
 		progressDialog.setMessage("Signing In...");
 		progressDialog.setIndeterminate(false);
 		
 		progressDialogmsg = new ProgressDialog(this);
-		// Set progressdialog title
-//		progressDialog.setTitle("Download Image");
-		// Set progressdialog message
 		progressDialogmsg.setMessage("Please wait...");
 		progressDialogmsg.setIndeterminate(false);
-		// Show progressdialog
-		
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		checkBoxValue = preferences.getString("CheckBox_Value");
-		new CheckIntroMsg().execute();
-		
-		
+
+		if(checkBoxValue != null && checkBoxValue.equals("1"))
+		{
+			String user = preferences.getString(_USERNAME_);
+			String pass = preferences.getString(_PASSWORD_);
+			username.setText(user);
+			password.setText(pass);
+			stay_signed.setChecked(true);
+			new SignInRequest().execute();
+		}
 	}
 
 	/**
@@ -119,11 +122,9 @@ public class SigninPage extends Activity {
 		try {
 			locationManager = (LocationManager) this
 					.getSystemService(LOCATION_SERVICE);
-
 			// getting GPS status
 			isGPSEnabled = locationManager
 					.isProviderEnabled(LocationManager.GPS_PROVIDER);
-
 			// getting network status
 			isNetworkEnabled = locationManager
 					.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
@@ -267,6 +268,8 @@ public class SigninPage extends Activity {
 	
 	private class SignInRequest extends AsyncTask<Void, Void, String> {
 		String result = null;
+		String _username;
+		String _password;
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -276,12 +279,18 @@ public class SigninPage extends Activity {
         @Override
         protected String doInBackground(Void... URL) {
             HttpClient httpClient = new DefaultHttpClient();
-            HttpPost request = new HttpPost(SIGNUP_URL);
+            HttpPost request = new HttpPost(SIGNIN_URL);
             
+            _username = username.getText().toString();
+            _password = password.getText().toString();
+            if(_username.equals("") || _password.equals(""))
+            {
+            	return "3004";
+            }
             try {
 	            List<NameValuePair> postParameters = new ArrayList<NameValuePair>();
-	            postParameters.add(new BasicNameValuePair("username", username.getText().toString()));
-	            postParameters.add(new BasicNameValuePair("password", password.getText().toString()));
+	            postParameters.add(new BasicNameValuePair("username", _username));
+	            postParameters.add(new BasicNameValuePair("password", _password));
 	
 	            UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(
 	                    postParameters);
@@ -315,110 +324,40 @@ public class SigninPage extends Activity {
         protected void onPostExecute(String result) {
 //        	Toast.makeText(getBaseContext(), result, 
 //	        		Toast.LENGTH_LONG).show();
-        	progressDialog.dismiss();
-        	switch(Integer.parseInt(result)){
         	
+        	switch(Integer.parseInt(result)){
         	case 3000:
-        		Toast.makeText(getBaseContext(), 
-        				getResources().getString(R.string.login_success), 
-    	        		Toast.LENGTH_LONG).show();
+        		preferences.put(_SAVEDUSER_, _username);
         		Intent intent = new Intent(SigninPage.this, MainActivity.class);
             	startActivity(intent);
+            	progressDialog.dismiss();
+            	Toast.makeText(getBaseContext(), 
+        				getResources().getString(R.string.login_success), 
+    	        		Toast.LENGTH_LONG).show();
             	finish();
         		break;
         	case 3001:
+        		progressDialog.dismiss();
         		Toast.makeText(getBaseContext(), 
         				getResources().getString(R.string.user_inactive),
     	        		Toast.LENGTH_LONG).show();
         		break;
         	case 3003:
+        		progressDialog.dismiss();
         		Toast.makeText(getBaseContext(), 
         				getResources().getString(R.string.invalid_login), 
         				Toast.LENGTH_LONG).show();
         		break;
+        	case 3004:
+        		progressDialog.dismiss();
+        		Toast.makeText(getBaseContext(), 
+        				getResources().getString(R.string.empty_user_or_pass), 
+        				Toast.LENGTH_LONG).show();
+        		break;
+        	default:
+        		progressDialog.dismiss();
         	}
         }
-	}
-
-	private class CheckIntroMsg extends AsyncTask<Void, Void, String> {
-		String result = null;
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			 progressDialogmsg.show();
-		}
-
-		@Override
-		protected String doInBackground(Void... URL) {
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpGet getRequest = new HttpGet();
-			try {
-				getRequest.setURI(new URI("http://hezzapp.appspot.com/getintromsg"));
-			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			HttpResponse getresponse;
-			try {
-				getresponse = httpClient.execute(getRequest);
-
-				int serverResponseCode = getresponse.getStatusLine().getStatusCode();
-				BufferedReader reader1 = new BufferedReader(new InputStreamReader(
-						getresponse.getEntity().getContent(), "UTF-8"));
-				String sResponse1;
-				StringBuilder s1 = new StringBuilder();
-
-				while ((sResponse1 = reader1.readLine()) != null) {
-					s1 = s1.append(sResponse1);
-				}
-				if(serverResponseCode == 200){
-
-//					runOnUiThread(new Runnable() {
-//						public void run() {
-//							String msg = "Got URL";
-//							Toast.makeText(SigninPage.this, "GOT URL!!", 
-//									Toast.LENGTH_SHORT).show();
-//						}
-//					});
-					return s1.toString();
-				} 
-
-			} catch (ClientProtocolException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(String result) {
-			 progressDialogmsg.dismiss();
-			if(result != null )
-			{
-				String flag = result.substring(0,1);
-				String msg = result.substring(1);
-				if(flag.equals("1"))
-				{
-					Utils.exitAlert(msg, SigninPage.this);
-				}else{
-					if(checkBoxValue != null && checkBoxValue.equals("1"))
-					{
-						String user = preferences.getString(_USERNAME_);
-						String pass = preferences.getString(_PASSWORD_);
-						username.setText(user);
-						password.setText(pass);
-						stay_signed.setChecked(true);
-						new SignInRequest().execute();
-					}
-				}
-			}else{
-				Toast.makeText(SigninPage.this, "Error!, check internet connection", 
-						Toast.LENGTH_SHORT).show();
-			}
-		}
 	}
 
 }

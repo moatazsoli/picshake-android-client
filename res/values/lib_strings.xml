@@ -43,4 +43,5 @@
     <string name="user_inactive">User inactive. Please activate your account through the link in your email.</string>
     <string name="login_success">Login Successful! Welcome Back !</string>
     <string name="invalid_login">Login Failed! Invalid Login Information.</string>
+    <string name="empty_user_or_pass">Username and password can\'t be empty.Please enter correct username and password.</string>
 </resources>

@@ -120,16 +120,21 @@ public class SignupPage extends Activity {
 	
 	
 	public void submit(View view) {
-		
-	    
-	    if(!(password1.getText().toString().equals(password2.getText().toString())))
+	    if(username.getText().toString().equals("") ||
+	       email.getText().toString().equals("") ||
+	       password1.getText().toString().equals("") ||
+	       password2.getText().toString().equals("") ||
+	       firstname.getText().toString().equals("") ||
+	       lastname.getText().toString().equals(""))
+	    {
+	    	Toast.makeText(getBaseContext(), "Please fill in all the information required", 
+	        		Toast.LENGTH_SHORT).show();
+	    }else if(!(password1.getText().toString().equals(password2.getText().toString())))
 	    {
 	    	Toast.makeText(getBaseContext(), "Passwords doesn't match", 
 	        		Toast.LENGTH_SHORT).show();
 	    }else{
 	    	new SignUpRequest().execute();
-	    	
-	    	//Intent intent = new Intent(this, DisplayPage.class);
 	    }
 	    
 	}
@@ -204,9 +209,6 @@ public class SignupPage extends Activity {
 				preferences.put(_PASSWORD_, password_field);
 				preferences.put("CheckBox_Value", "1");
 				Intent intent = new Intent(SignupPage.this, SigninPage.class);
-				// Bundle b = new Bundle();
-				// b.putParcelable("RESPONSE",(Parcelable) response);
-				// intent.putExtras(b);
 				startActivity(intent);
 				finish();
 				break;
