@@ -46,9 +46,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
 		setContentView(R.layout.activity_main);
-		
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		
 		//check for tutorial
@@ -169,7 +167,10 @@ public class MainActivity extends Activity {
 		sendActivityVanish.setAnimationListener(new Animation.AnimationListener() {
 			@Override
 			public void onAnimationStart(Animation animation) {
-				// Do nothing
+				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
+			    intent.putExtra("selectOrCamera", 0); //camera or select
+			    // 0 is select , 1 is camera
+			    startActivity(intent);
 			}
 			
 			@Override
@@ -179,10 +180,7 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onAnimationEnd(Animation animation) {
-				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
-			    intent.putExtra("selectOrCamera", 0); //camera or select
-			    // 0 is select , 1 is camera
-			    startActivity(intent);
+				
 			}
 		});
 		
@@ -191,7 +189,10 @@ public class MainActivity extends Activity {
 		takePicVanish.setAnimationListener(new Animation.AnimationListener() {
 			@Override
 			public void onAnimationStart(Animation animation) {
-				// Do nothing
+				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
+			    intent.putExtra("selectOrCamera", 1); //camera or select
+			     //0 is select , 1 is camera
+			    startActivity(intent);
 			}
 			
 			@Override
@@ -201,10 +202,7 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onAnimationEnd(Animation animation) {
-				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
-			    intent.putExtra("selectOrCamera", 1); //camera or select
-			     //0 is select , 1 is camera
-			    startActivity(intent);	
+					
 			}
 		});
 		
@@ -213,7 +211,8 @@ public class MainActivity extends Activity {
 		receiveActivityVanish.setAnimationListener(new Animation.AnimationListener() {
 			@Override
 			public void onAnimationStart(Animation animation) {
-				// Do nothing
+				Intent intent = new Intent(MainActivity.this, ReceiverActivity.class);
+			    startActivity(intent);
 			}
 			
 			@Override
@@ -223,8 +222,7 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onAnimationEnd(Animation animation) {
-			    Intent intent = new Intent(MainActivity.this, ReceiverActivity.class);
-			    startActivity(intent);
+			    
 			}
 		});
 		
@@ -233,14 +231,17 @@ public class MainActivity extends Activity {
 	
 	/** Called when the user clicks the Send button */
 	public void sendActivity(View view) {
+		overridePendingTransition(R.anim.anim_in_left, R.anim.anim_out_left);
 	    view.startAnimation(sendActivityVanish);
 	}
 	
 	public void takePic(View view) {
+		overridePendingTransition(R.anim.anim_in_bottom, R.anim.anim_out_bottom);
 	    view.startAnimation(takePicVanish);
 	}
 	
 	public void receiveActivity(View view) {
+		overridePendingTransition(R.anim.anim_in_right, R.anim.anim_out_right);
 	    view.startAnimation(receiveActivityVanish);
 	}
 	

@@ -177,7 +177,12 @@ AccelerometerListener {
 		Intent mIntent = getIntent();
 		selectOrCamera = mIntent.getIntExtra("selectOrCamera", 1);
         passcode = (EditText)findViewById(R.id.passcode);
-        
+        if(selectOrCamera == 1)
+        {
+        	overridePendingTransition(R.anim.anim_in_top, R.anim.anim_out_top);
+        }else{
+        	overridePendingTransition(R.anim.anim_in_right, R.anim.anim_out_right);
+        }
 
 		// Create a new global location parameters object
 		mLocationRequest = LocationRequest.create();
@@ -247,6 +252,12 @@ AccelerometerListener {
 	    intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
 	    // start the image capture Intent
 	    startActivityForResult(intent, CAMERA_CAPTURE_IMAGE_REQUEST_CODE);
+	}
+	
+	@Override
+	public void onBackPressed() {
+	    super.onBackPressed();
+	    overridePendingTransition(R.anim.anim_in_right, R.anim.anim_out_right);  
 	}
 	
 	/**

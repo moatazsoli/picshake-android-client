@@ -65,7 +65,6 @@ public class SigninPage extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_signin_page);
 		// Show the Up button in the action bar.
-		
 		boolean resume = true;
 		if (!isGPSEnabled()) {
 			showGpsSettingsAlert();
@@ -227,15 +226,6 @@ public class SigninPage extends Activity {
 	}
 	
 	public void signin(View view) {
-		if(stay_signed.isChecked())
-		{
-			preferences.put(_USERNAME_, username.getText().toString());
-			preferences.put(_PASSWORD_, password.getText().toString());
-			preferences.put("CheckBox_Value", "1");
-		}else{
-			preferences.put("CheckBox_Value", "0");
-		}
-		
     	new SignInRequest().execute();
 	    	//Intent intent = new Intent(this, DisplayPage.class);
 	}
@@ -327,6 +317,14 @@ public class SigninPage extends Activity {
         	switch(Integer.parseInt(result)){
         	case 3000:
         		preferences.put(_SAVEDUSER_, _username);
+        		if(stay_signed.isChecked())
+        		{
+        			preferences.put(_USERNAME_, username.getText().toString());
+        			preferences.put(_PASSWORD_, password.getText().toString());
+        			preferences.put("CheckBox_Value", "1");
+        		}else{
+        			preferences.put("CheckBox_Value", "0");
+        		}
         		Intent intent = new Intent(SigninPage.this, MainActivity.class);
             	startActivity(intent);
             	progressDialog.dismiss();

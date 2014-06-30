@@ -163,7 +163,7 @@ AccelerometerListener {
 		setContentView(R.layout.activity_receiver);
 		// Show the Up button in the action bar.
 		setupActionBar();
-		
+		overridePendingTransition(R.anim.anim_in_left, R.anim.anim_out_left);
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		username = preferences.getString(_SAVEDUSER_);
 		
@@ -221,6 +221,12 @@ AccelerometerListener {
 	// Thumbnails Grid
 	// #######################################################################
 
+	@Override
+	public void onBackPressed() {
+	    super.onBackPressed();
+	    overridePendingTransition(R.anim.anim_in_left, R.anim.anim_out_left);  
+	}
+	
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		if(mActionModeStarted) {
