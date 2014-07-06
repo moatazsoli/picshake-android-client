@@ -68,5 +68,6 @@
     <string name="title_activity_splashscreen">Splashscreen</string>
     <string name="title_activity_signin_page">SigninPage</string>
     <string name="title_activity_signup_page">SignupPage</string>
+    <string name="title_activity_list">List</string>
 
 </resources>

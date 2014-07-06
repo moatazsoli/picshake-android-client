@@ -19,6 +19,12 @@ public class Splashscreen extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_splashscreen);
+		if(false)
+		{
+			Intent intent = new Intent(getApplicationContext(),List.class);
+	    	startActivity(intent);
+	    	finish();
+		}else{
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		checkBoxValue = preferences.getString("CheckBox_Value");
 		if(checkBoxValue != null && checkBoxValue.equals("1"))
@@ -52,6 +58,7 @@ public class Splashscreen extends Activity {
 		    	finish();
 		    }
 		}, 2000);
+		}
 		}
 	}
 

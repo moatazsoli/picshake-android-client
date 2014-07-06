@@ -78,6 +78,10 @@
             android:name="com.moataz.picshake.SignupPage"
             android:label="@string/title_activity_signup_page" >
         </activity>
+        <activity
+            android:name="com.moataz.picshake.List"
+            android:label="@string/title_activity_list" >
+        </activity>
     </application>
 
 </manifest>

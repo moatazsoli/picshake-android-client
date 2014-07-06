@@ -50,12 +50,16 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.location.LocationManager;
 import android.media.RingtoneManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.provider.Settings;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
@@ -67,6 +71,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.Checkable;
@@ -74,6 +80,8 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -83,6 +91,8 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.moataz.picshake.SenderActivity.LoadPublicTags;
+import com.nhaarman.listviewanimations.swinginadapters.prepared.AlphaInAnimationAdapter;
 
 public class ReceiverActivity extends FragmentActivity implements
 LocationListener,
@@ -127,7 +137,9 @@ AccelerometerListener {
 	private LocationClient mLocationClient;
 	
 	ArrayList<HashMap<String, Object>> thumbnailsMap;
-
+	private String mLatitude;
+	
+	private String mLongitude;
 	// Handles to UI widgets
 	private TextView mLatLng;
 //	private TextView mAddress;
@@ -149,9 +161,15 @@ AccelerometerListener {
 	 * method handleRequestSuccess of LocationUpdateReceiver.
 	 *
 	 */
-	boolean mUpdatesRequested = false;
+	boolean mUpdatesRequested = true;
 	
 	private NotificationManager notificationManager;
+	
+	//Public tags
+	private ProgressBar spinner;
+	private ArrayAdapter<String> simpleAdpt;
+	private ArrayList<String> publicTags = new ArrayList<String>();
+	private ListView lv;
 
 	/*
 	 * Initialize the Activity
@@ -199,7 +217,7 @@ AccelerometerListener {
 		mLocationRequest.setFastestInterval(LocationUtils.FAST_INTERVAL_CEILING_IN_MILLISECONDS);
 
 		// Note that location updates are off until the user turns them on
-		mUpdatesRequested = false;
+		mUpdatesRequested = true;
 
 		// Open Shared Preferences
 		mPrefs = getSharedPreferences(LocationUtils.SHARED_PREFERENCES, Context.MODE_PRIVATE);
@@ -207,6 +225,8 @@ AccelerometerListener {
 		// Get an editor
 		mEditor = mPrefs.edit();
 
+		mEditor.putBoolean(LocationUtils.KEY_UPDATES_REQUESTED, true);
+		mEditor.commit();
 		/*
 		 * Create a new location client, using the enclosing class to
 		 * handle callbacks.
@@ -215,6 +235,34 @@ AccelerometerListener {
 		
 		notificationManager = (NotificationManager)  getSystemService(NOTIFICATION_SERVICE);
 		
+		/*
+		 * public tags list setup
+		 */
+		//connectAndStartLocationUpdates();
+		spinner = (ProgressBar)findViewById(R.id.progressBar1);
+	    spinner.setVisibility(View.GONE);
+		
+		simpleAdpt = new ArrayAdapter<String>(ReceiverActivity.this,
+                R.layout.mytextview, publicTags);
+		lv = (ListView) findViewById(R.id.listView);
+		
+		AlphaInAnimationAdapter alphaInAnimationAdapter = new AlphaInAnimationAdapter(simpleAdpt);
+		alphaInAnimationAdapter.setAbsListView(lv);
+		lv.setAdapter(alphaInAnimationAdapter);
+		
+	    lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+	    	 
+	        public void onItemClick(AdapterView<?> parentAdapter, View view, int position,
+	                                long id) {
+	                 
+	         
+	            // We know the View is a TextView so we can cast it
+	            TextView clickedView = (TextView) view;
+	            passcode.setText(clickedView.getText());
+	    
+	        }
+	   });
+	    
 	}
 	
 	// #######################################################################
@@ -240,7 +288,8 @@ AccelerometerListener {
 	
 	public void viewThumbnails() {
 
-	    passcode.setVisibility(View.GONE);
+		lv.setVisibility(View.GONE);
+		passcode.setVisibility(View.GONE);
 		textView1.setVisibility(View.GONE);
 		mGrid.setVisibility(View.VISIBLE);
 		mGrid.setAdapter(new ThumbnailsAdapter());
@@ -425,6 +474,12 @@ AccelerometerListener {
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+	
+	private void connectAndStartLocationUpdates()
+	{
+		mUpdatesRequested = true;
+		mLocationClient.connect();
 	}
 	
 	
@@ -725,6 +780,7 @@ AccelerometerListener {
 
 		if (mUpdatesRequested) {
 			startPeriodicUpdates();
+			new LoadPublicTags().execute();
 		}
 	}
 
@@ -1137,9 +1193,18 @@ AccelerometerListener {
 	private class GetImageUrls extends AsyncTask<Void, Void, HashMap<String, Object>> {
 
 		private boolean error;
+		boolean noConnection;
+		private final String _SUCESS_ = "600";
+		private final String _FAILED_COORDINATES_ = "601";
+		private final String _FAILED_GET_URL_ = "602";
+		private final String _FAILED_CONNECTION_ = "603";
+		String _return_val;
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			mLatitude = getLat();
+			mLongitude = getLng();
+			_return_val="";
 			error = false;
 			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
 			mProgressDialog.setTitle("Searching For Photos");
@@ -1150,96 +1215,142 @@ AccelerometerListener {
 
 		@Override
 		protected HashMap<String, Object> doInBackground(Void... params) {	
+			
+			if (!isGPSEnabled() || !isNetworkAvailable()) {
+				_return_val =  _FAILED_CONNECTION_;
+				return null;
+			}else if(mLatitude.equals("") || mLongitude.equals("") ) {
+				_return_val =  _FAILED_COORDINATES_;
+				return null;
+			}else{
 
-			String myURL = "https://hezzapp.appspot.com/getpic";
-			
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
-			nameValuePairs.add(new BasicNameValuePair("passcode", passcode.getText().toString()));
-			nameValuePairs.add(new BasicNameValuePair("latitude", getLat()));
-			nameValuePairs.add(new BasicNameValuePair("longitude", getLng()));
-			if(username != null && !username.equals(""))
-			{
-				nameValuePairs.add(new BasicNameValuePair("username", username));
-			}
-			
-			String paramsString = URLEncodedUtils.format(nameValuePairs, "UTF-8");
-			
-			String downloadUrl="";
-			String strToParse="";
-			try {
-				HttpClient client = new DefaultHttpClient();
-				HttpGet request = new HttpGet(myURL + "?" + paramsString);
-				HttpResponse response = client.execute(request);
-				BufferedReader reader1 = new BufferedReader(new InputStreamReader(
-						response.getEntity().getContent(), "UTF-8"));
-				String sResponse1;
-				StringBuilder s1 = new StringBuilder();
+				String myURL = "https://hezzapp.appspot.com/getpic";
 
-				while ((sResponse1 = reader1.readLine()) != null) {
-					s1 = s1.append(sResponse1);
+				List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
+				nameValuePairs.add(new BasicNameValuePair("passcode", passcode.getText().toString()));
+				nameValuePairs.add(new BasicNameValuePair("latitude", mLatitude));
+				nameValuePairs.add(new BasicNameValuePair("longitude", mLongitude));
+				if(username != null && !username.equals(""))
+				{
+					nameValuePairs.add(new BasicNameValuePair("username", username));
 				}
-				if(s1.toString().equals(NO_IMAGE_FOUND)) //No Image Found Error Code
+
+				String paramsString = URLEncodedUtils.format(nameValuePairs, "UTF-8");
+
+				String downloadUrl="";
+				String strToParse="";
+				try {
+					HttpClient client = new DefaultHttpClient();
+					HttpGet request = new HttpGet(myURL + "?" + paramsString);
+					HttpResponse response = client.execute(request);
+					BufferedReader reader1 = new BufferedReader(new InputStreamReader(
+							response.getEntity().getContent(), "UTF-8"));
+					String sResponse1;
+					StringBuilder s1 = new StringBuilder();
+
+					while ((sResponse1 = reader1.readLine()) != null) {
+						s1 = s1.append(sResponse1);
+					}
+					if(s1.toString().equals(NO_IMAGE_FOUND)) //No Image Found Error Code
+					{
+						return null;
+					}
+					//JSON Parsing
+					strToParse = s1.toString();
+
+					//downloadUrl = s1.toString();
+					System.out.println(downloadUrl);
+				} catch (Exception e) {
+					System.out.println(e.toString());
+					error = true;
+					Log.v("dd", "error");
+				}
+
+				if(strToParse.equals(""))
 				{
 					return null;
 				}
-				//JSON Parsing
-				strToParse = s1.toString();
-				
-				//downloadUrl = s1.toString();
-				System.out.println(downloadUrl);
-			} catch (Exception e) {
-				System.out.println(e.toString());
-				error = true;
-				Log.v("dd", "error");
+				HashMap<String,Object> returnedHashMap = getItemsMapFromJsonReply(strToParse);
+				//			List<String> items = getItemsFromJsonReply(strToParse);
+				//			if(items.size()==0)
+				//			{
+				//				return null;
+				//			}
+				return returnedHashMap;
 			}
-			
-			if(strToParse.equals(""))
-			{
-				return null;
-			}
-			String imageURL="";
-			String stringURL="";
-			HashMap<String,Object> returnedHashMap = getItemsMapFromJsonReply(strToParse);
-//			List<String> items = getItemsFromJsonReply(strToParse);
-//			if(items.size()==0)
-//			{
-//				return null;
-//			}
-			return returnedHashMap;
 		}
 
 		@SuppressWarnings("unchecked")
 		@Override
 		protected void onPostExecute(HashMap<String, Object> result) {
 			// Set the bitmap into ImageView
-//			image.setImageBitmap(result);
+			//			image.setImageBitmap(result);
 			mProgressDialog.dismiss();
 			if(result == null)
 			{
-				String root = Environment.getExternalStorageDirectory().toString();
-				System.out.println("ROOOT" + root);
-				passcode.setText("");
-				runOnUiThread(new Runnable() {
-					public void run() {
-						if(error)
-						{
-							Toast.makeText(ReceiverActivity.this, "Error! While Getting pics", 
-									Toast.LENGTH_SHORT).show();
-						}else{
-							Toast.makeText(ReceiverActivity.this, "No Images Found", 
+
+				if(_return_val.equals(_FAILED_COORDINATES_)) //can't get coordinates
+				{
+					passcode.setText("");
+					AlertDialog.Builder builder = new AlertDialog.Builder(ReceiverActivity.this);
+					String message = "Please make sure that your GPS is enabled and your Google Location Settings is enabled as well and try again.";
+					builder.setTitle("Can't Access Location")
+					.setMessage(message)
+					.setCancelable(false)
+					.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int id) {
+							finish();
+						}
+					});
+					AlertDialog alert = builder.create();
+					alert.show();
+
+				}else if(_return_val.equals(_FAILED_CONNECTION_)){
+					passcode.setText("");
+					AlertDialog.Builder builder = new AlertDialog.Builder(ReceiverActivity.this);
+					String message = "Please make sure that your GPS is enabled and your have internet connectivity.";
+					builder.setTitle("Failed Connection")
+					.setMessage(message)
+					.setCancelable(false)
+					.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int id) {
+							finish();
+						}
+					});
+					AlertDialog alert = builder.create();
+					alert.show();
+				}else if(_return_val.equals(_FAILED_GET_URL_)){
+					passcode.setText("");
+					runOnUiThread(new Runnable() {
+						public void run() {
+							Toast.makeText(ReceiverActivity.this, "Failed to connect to the server. Please try again later.", 
 									Toast.LENGTH_SHORT).show();
 						}
-					}
-				});
-				
+					}); 
+					finish();
+				}else{
+					passcode.setText("");
+					runOnUiThread(new Runnable() {
+						public void run() {
+							if(error)
+							{
+								Toast.makeText(ReceiverActivity.this, "Error! While Getting pics", 
+										Toast.LENGTH_SHORT).show();
+							}else{
+								Toast.makeText(ReceiverActivity.this, "No Images Found", 
+										Toast.LENGTH_SHORT).show();
+							}
+						}
+					});
+				}
 			}else{
-					// List<String> z;
-//					listVar.clear();
-//					imagesTemp.clear();
-					imagesTemp = (ArrayList<HashMap<String, Object>>) result.get("list");
-					new DownloadThumbnails()
-							.execute(imagesTemp);
-					
+				// List<String> z;
+				//					listVar.clear();
+				//					imagesTemp.clear();
+				imagesTemp = (ArrayList<HashMap<String, Object>>) result.get("list");
+				new DownloadThumbnails()
+				.execute(imagesTemp);
+
 			}
 		}
 	}
@@ -1465,6 +1576,232 @@ AccelerometerListener {
 		}
 	}
 	
+	class LoadPublicTags extends AsyncTask<String, String, String> {
+		ProgressDialog progDailog;
+		boolean noConnection;
+		String strToParse="";
+		private final String _SUCESS_ = "600";
+		private final String _FAILED_COORDINATES_ = "601";
+		private final String _FAILED_GET_URL_ = "602";
+		private final String _FAILED_CONNECTION_ = "603";
+		@Override
+	    protected void onPreExecute() {
+	        super.onPreExecute();
+	        mLatitude = getLat();
+			mLongitude = getLng();
+	        spinner.setVisibility(View.VISIBLE);
+	    }
+	    @Override
+	    protected String doInBackground(String... aurl) {
+
+	    	if (!isGPSEnabled() || !isNetworkAvailable()) {
+	    		return _FAILED_CONNECTION_;
+	    	}else if(mLatitude.equals("") || mLongitude.equals("") ) {
+				return _FAILED_COORDINATES_;
+			}else{
+
+	    		String myURL = "https://hezzapp.appspot.com/getpubpasscodes";
+
+	    		ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
+	    		nameValuePairs.add(new BasicNameValuePair("latitude", mLatitude));
+	    		nameValuePairs.add(new BasicNameValuePair("longitude", mLongitude));
+
+	    		String paramsString = URLEncodedUtils.format(nameValuePairs, "UTF-8");
+
+	    		String downloadUrl="";
+	    		
+	    		try {
+	    			HttpClient client = new DefaultHttpClient();
+	    			HttpGet request = new HttpGet(myURL + "?" + paramsString);
+	    			HttpResponse response = client.execute(request);
+	    			serverResponseCode = response.getStatusLine().getStatusCode();
+	    			BufferedReader reader1 = new BufferedReader(new InputStreamReader(
+	    					response.getEntity().getContent(), "UTF-8"));
+	    			String sResponse1;
+	    			StringBuilder s1 = new StringBuilder();
+
+	    			if(!(serverResponseCode == 200)){
+	    				return _FAILED_GET_URL_;
+	    			}else{
+	    			while ((sResponse1 = reader1.readLine()) != null) {
+	    				s1 = s1.append(sResponse1);
+	    			}
+	    			if(s1.toString().equals("7002")) //No Image Found Error Code
+	    			{
+	    				return null;
+	    			}
+	    			//JSON Parsing
+	    			strToParse = s1.toString();
+
+	    			//downloadUrl = s1.toString();
+	    			System.out.println(downloadUrl);
+	    			}
+	    		} catch (Exception e) {
+	    			System.out.println(e.toString());
+	    		}
+
+	    		if(strToParse.equals(""))
+	    		{
+	    			return null;
+	    		}
+	    		return _SUCESS_;
+	    	}
+	    }
+	    @Override
+	    protected void onPostExecute(String result) {
+	        super.onPostExecute(result);
+	        spinner.setVisibility(View.GONE);
+	        
+			if(result.equals(_FAILED_COORDINATES_)) //can't get coordinates
+			{
+				passcode.setText("");
+				AlertDialog.Builder builder = new AlertDialog.Builder(ReceiverActivity.this);
+				String message = "Please make sure that your GPS is enabled and your Google Location Settings is enabled as well and try again.";
+				builder.setTitle("Can't Access Location")
+					   .setMessage(message)
+				       .setCancelable(false)
+				       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				        	   finish();
+				           }
+				       });
+				AlertDialog alert = builder.create();
+				alert.show();
+				
+			}else if(result.equals(_FAILED_CONNECTION_)){
+				passcode.setText("");
+				AlertDialog.Builder builder = new AlertDialog.Builder(ReceiverActivity.this);
+				String message = "Please make sure that your GPS is enabled and your have internet connectivity.";
+				builder.setTitle("Failed Connection")
+					   .setMessage(message)
+				       .setCancelable(false)
+				       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				        	   finish();
+				           }
+				       });
+				AlertDialog alert = builder.create();
+				alert.show();
+			}else if(result.equals(_FAILED_GET_URL_)){
+				passcode.setText("");
+				runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(ReceiverActivity.this, "Failed to connect to the server. Please try again later.", 
+								Toast.LENGTH_SHORT).show();
+					}
+				}); 
+				finish();
+			}else if(result.equals(_SUCESS_)){
+				addItemsFromJsonToList(strToParse);
+			}
+			
+	        
+	    }
+	}
+	
+	
+	public boolean isGPSEnabled(){
+		// flag for GPS status
+		boolean isGPSEnabled = false;
+
+		// flag for network status
+		boolean isNetworkEnabled = false;
+
+		// Declaring a Location Manager
+		LocationManager locationManager = null;
+		// flag for GPS status
+		boolean canGetLocation = false;
+		try {
+			locationManager = (LocationManager) this
+					.getSystemService(LOCATION_SERVICE);
+			// getting GPS status
+			isGPSEnabled = locationManager
+					.isProviderEnabled(LocationManager.GPS_PROVIDER);
+			// getting network status
+			isNetworkEnabled = locationManager
+					.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+			if (!isGPSEnabled && !isNetworkEnabled) {
+				return false;
+			}
+			return true;
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+		
+	}
+	
+	/**
+	 * Function to show settings alert dialog
+	 * On pressing Settings button will lauch Settings Options
+	 * */
+	public void showGpsSettingsAlert(){
+		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+   	 
+        // Setting Dialog Title
+        alertDialog.setTitle("GPS settings");
+ 
+        // Setting Dialog Message
+        alertDialog.setMessage("GPS is not enabled. Do you want to go to settings menu?");
+ 
+        // On pressing Settings button
+        alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int which) {
+            	Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            	startActivity(intent);
+            }
+        });
+ 
+        // on pressing cancel button
+        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+            android.os.Process.killProcess(android.os.Process.myPid());
+            dialog.cancel();
+            }
+        });
+ 
+        // Showing Alert Message
+        alertDialog.show();
+	}
+	
+	public void showNoInternetSettingsAlert(){
+		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+   	 
+        // Setting Dialog Title
+        alertDialog.setTitle("Internet settings");
+ 
+        // Setting Dialog Message
+        alertDialog.setMessage("Internet is not enabled. Do you want to go to settings menu?");
+ 
+        // On pressing Settings button
+        alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int which) {
+            	Intent intent = new Intent(Settings.ACTION_SETTINGS);
+            	startActivity(intent);
+            }
+        });
+ 
+        // on pressing cancel button
+        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+            	android.os.Process.killProcess(android.os.Process.myPid());
+            dialog.cancel();
+            }
+        });
+ 
+        // Showing Alert Message
+        alertDialog.show();
+	}
+	
+	private boolean isNetworkAvailable() {
+	    ConnectivityManager connectivityManager 
+	          = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+	    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+	    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+	}
+
+
 	private void showNotification(int imagesReceived, int totalImages) {
 
 		String contextText = new String();
@@ -1507,6 +1844,38 @@ AccelerometerListener {
 
 		notificationManager.notify(0, notification); 
 	}
+	
+	
+	public void addItemsFromJsonToList(String aInStr)
+	{
+		// images JSONArray
+		JSONArray obj = null;
+		JSONObject jsonObj;
+
+		if (aInStr != null) {
+			try {
+				jsonObj = new JSONObject(aInStr);
+				if(jsonObj.has("list") && jsonObj.has("counter"))
+				{
+					obj = jsonObj.getJSONArray("list");
+					// looping through All Contacts
+					for (int i = 0; i < obj.length(); i++) {
+						JSONObject c = obj.getJSONObject(i);
+
+						String passcode = c.getString("passcode");
+						publicTags.add(passcode);
+					}
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+	
+	
+	
+	
 	
 	
 

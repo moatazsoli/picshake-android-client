@@ -17,15 +17,21 @@ import java.util.Locale;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -69,13 +75,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.Toast;
 
@@ -89,6 +100,8 @@ import com.google.android.gms.location.LocationRequest;
 import com.luminous.pick.CustomGallery;
 import com.luminous.pick.GalleryAdapter;
 import com.moataz.picshake.CustomMultiPartEntity.ProgressListener;
+import com.moataz.picshake.List.LoadPublicTags;
+import com.nhaarman.listviewanimations.swinginadapters.prepared.AlphaInAnimationAdapter;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
 public class SenderActivity extends FragmentActivity implements
@@ -156,6 +169,12 @@ AccelerometerListener {
 	private NotificationManager notificationManager;
 	
 	private int imageSize = ORIGINAL;
+	
+	//Public tags
+	private ProgressBar spinner;
+	private ArrayAdapter<String> simpleAdpt;
+	private ArrayList<String> publicTags = new ArrayList<String>();
+	private ListView lv;
 
 	/*
 	 * Initialize the Activity
@@ -177,6 +196,31 @@ AccelerometerListener {
 		Intent mIntent = getIntent();
 		selectOrCamera = mIntent.getIntExtra("selectOrCamera", 1);
         passcode = (EditText)findViewById(R.id.passcode);
+        
+        /*
+		 * public tags list setup
+		 */
+		spinner = (ProgressBar)findViewById(R.id.progressBar1);
+	    spinner.setVisibility(View.GONE);
+		
+		simpleAdpt = new ArrayAdapter<String>(SenderActivity.this,
+                R.layout.mytextview, publicTags);
+		lv = (ListView) findViewById(R.id.listView);
+		
+		AlphaInAnimationAdapter alphaInAnimationAdapter = new AlphaInAnimationAdapter(simpleAdpt);
+		alphaInAnimationAdapter.setAbsListView(lv);
+		lv.setAdapter(alphaInAnimationAdapter);
+		
+	    lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+	    	 
+	        public void onItemClick(AdapterView<?> parentAdapter, View view, int position,
+	                                long id) {
+	            // We know the View is a TextView so we can cast it
+	            TextView clickedView = (TextView) view;
+	            passcode.setText(clickedView.getText());
+	        }
+	   });        
+        
         if(selectOrCamera == 1)
         {
         	overridePendingTransition(R.anim.anim_in_top, R.anim.anim_out_top);
@@ -235,6 +279,7 @@ AccelerometerListener {
 		}
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        
         
 	}
 	
@@ -506,6 +551,7 @@ AccelerometerListener {
 		                	imageSize = ORIGINAL;
 		                }
 		                dialog.dismiss();
+		                new LoadPublicTags().execute();
 		            }
 		        });
 				
@@ -585,6 +631,7 @@ AccelerometerListener {
 		                	imageSize = ORIGINAL;
 		                }
 		                dialog.dismiss();
+		                new LoadPublicTags().execute();
 		            }
 		        });
 				
@@ -1351,6 +1398,157 @@ AccelerometerListener {
 					Toast.makeText(getApplicationContext(),
 							"No Pictures Selected",
 							Toast.LENGTH_SHORT).show();
+			}
+		}
+
+	}
+	
+	
+	class LoadPublicTags extends AsyncTask<String, String, String> {
+		ProgressDialog progDailog;
+		boolean noConnection;
+		String strToParse="";
+		private final String _SUCESS_ = "600";
+		private final String _FAILED_COORDINATES_ = "601";
+		private final String _FAILED_GET_URL_ = "602";
+		private final String _FAILED_CONNECTION_ = "603";
+		@Override
+	    protected void onPreExecute() {
+	        super.onPreExecute();
+	        mLatitude = getLat();
+			mLongitude = getLng();
+	        spinner.setVisibility(View.VISIBLE);
+	    }
+	    @Override
+	    protected String doInBackground(String... aurl) {
+
+	    	if (!isGPSEnabled() || !isNetworkAvailable()) {
+	    		return _FAILED_CONNECTION_;
+	    	}else if(mLatitude.equals("") || mLongitude.equals("") ) {
+				return _FAILED_COORDINATES_;
+			}else{
+
+	    		String myURL = "https://hezzapp.appspot.com/getpubpasscodes";
+
+	    		ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
+	    		nameValuePairs.add(new BasicNameValuePair("latitude", mLatitude));
+	    		nameValuePairs.add(new BasicNameValuePair("longitude", mLongitude));
+
+	    		String paramsString = URLEncodedUtils.format(nameValuePairs, "UTF-8");
+
+	    		String downloadUrl="";
+	    		
+	    		try {
+	    			HttpClient client = new DefaultHttpClient();
+	    			HttpGet request = new HttpGet(myURL + "?" + paramsString);
+	    			HttpResponse response = client.execute(request);
+	    			serverResponseCode = response.getStatusLine().getStatusCode();
+	    			BufferedReader reader1 = new BufferedReader(new InputStreamReader(
+	    					response.getEntity().getContent(), "UTF-8"));
+	    			String sResponse1;
+	    			StringBuilder s1 = new StringBuilder();
+
+	    			if(!(serverResponseCode == 200)){
+	    				return _FAILED_GET_URL_;
+	    			}else{
+	    			while ((sResponse1 = reader1.readLine()) != null) {
+	    				s1 = s1.append(sResponse1);
+	    			}
+	    			if(s1.toString().equals("7002")) //No Image Found Error Code
+	    			{
+	    				return null;
+	    			}
+	    			//JSON Parsing
+	    			strToParse = s1.toString();
+
+	    			//downloadUrl = s1.toString();
+	    			System.out.println(downloadUrl);
+	    			}
+	    		} catch (Exception e) {
+	    			System.out.println(e.toString());
+	    		}
+
+	    		if(strToParse.equals(""))
+	    		{
+	    			return null;
+	    		}
+	    		return _SUCESS_;
+	    	}
+	    }
+	    @Override
+	    protected void onPostExecute(String result) {
+	        super.onPostExecute(result);
+	        spinner.setVisibility(View.GONE);
+	        
+			if(result.equals(_FAILED_COORDINATES_)) //can't get coordinates
+			{
+				passcode.setText("");
+				AlertDialog.Builder builder = new AlertDialog.Builder(SenderActivity.this);
+				String message = "Please make sure that your GPS is enabled and your Google Location Settings is enabled as well and try again.";
+				builder.setTitle("Can't Access Location")
+					   .setMessage(message)
+				       .setCancelable(false)
+				       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				        	   finish();
+				           }
+				       });
+				AlertDialog alert = builder.create();
+				alert.show();
+				
+			}else if(result.equals(_FAILED_CONNECTION_)){
+				passcode.setText("");
+				AlertDialog.Builder builder = new AlertDialog.Builder(SenderActivity.this);
+				String message = "Please make sure that your GPS is enabled and your have internet connectivity.";
+				builder.setTitle("Failed Connection")
+					   .setMessage(message)
+				       .setCancelable(false)
+				       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				        	   finish();
+				           }
+				       });
+				AlertDialog alert = builder.create();
+				alert.show();
+			}else if(result.equals(_FAILED_GET_URL_)){
+				passcode.setText("");
+				runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(SenderActivity.this, "Failed to connect to the server. Please try again later.", 
+								Toast.LENGTH_SHORT).show();
+					}
+				}); 
+				finish();
+			}else if(result.equals(_SUCESS_)){
+				addItemsFromJsonToList(strToParse);
+			}
+			
+	        
+	    }
+	}
+	
+	public void addItemsFromJsonToList(String aInStr)
+	{
+		// images JSONArray
+		JSONArray obj = null;
+		JSONObject jsonObj;
+
+		if (aInStr != null) {
+			try {
+				jsonObj = new JSONObject(aInStr);
+				if(jsonObj.has("list") && jsonObj.has("counter"))
+				{
+					obj = jsonObj.getJSONArray("list");
+					// looping through All Contacts
+					for (int i = 0; i < obj.length(); i++) {
+						JSONObject c = obj.getJSONObject(i);
+
+						String passcode = c.getString("passcode");
+						publicTags.add(passcode);
+					}
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
 			}
 		}
 
