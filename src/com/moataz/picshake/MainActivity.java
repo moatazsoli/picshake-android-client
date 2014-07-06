@@ -51,8 +51,7 @@ public class MainActivity extends Activity {
 		
 		//check for tutorial
 		if(!preferences.getBoolean("firstTime", false)) {
-			showActivityOverlay();
-			preferences.putBoolean("firstTime", true);
+			showActivityOverlay();			
 		}
 		
 		setupActionAnimationListeners();
@@ -119,6 +118,10 @@ public class MainActivity extends Activity {
 					im.setImageResource(R.drawable.startup7);					
 					layout.addView(im);
 					break;
+				case 8:
+					dialog.dismiss();
+					showTutorialAlert();
+					break;
 				default:
 					dialog.dismiss();
 				
@@ -152,6 +155,35 @@ public class MainActivity extends Activity {
             	startActivity(intent);
             	finish();
 	            return true;
+	            
+	        case R.id.action_tutorial:	        
+	        	AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+	    		alertDialog.setTitle("Tutorial Completed")
+	    		.setMessage("Would you like to view the tutorial?")	       
+	            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+	                @Override
+	                public void onClick(DialogInterface dialog, int id) {
+	                    // User clicked OK, so save the mSelectedItems results somewhere
+	                    // or return them to the component that opened the dialog	
+	                    dialog.dismiss();		               
+	                }
+	            })
+	             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+	                @Override
+	                public void onClick(DialogInterface dialog, int id) {
+	                    // User clicked OK, so save the mSelectedItems results somewhere
+	                    // or return them to the component that opened the dialog		           
+	                	preferences.putBoolean("firstTime", false);
+	          		    dialog.dismiss();
+	          		    Intent intent = new Intent(MainActivity.this, SigninPage.class);
+	          		    startActivity(intent);
+	          		    finish();		               
+	                }
+	            });
+	    		alertDialog.create();
+	    		alertDialog.show();
+	        	return true;
+	        	
 	        case R.id.action_info:
 	        	Utils.showAlert("About PicShake", "<p>Version 1.0</p><p>PicShake</p><p>Copyright 2014 Valyria Inc. All rights reserved.</p><p>This is only a non official Beta Version of the app</p><p><a href='http://hezzapp.appspot.com/terms'>Terms of Use</a></p><p><a href='http://hezzapp.appspot.com/privacy'>Privacy Policy</a></p>", MainActivity.this);
 	        default:
@@ -244,5 +276,39 @@ public class MainActivity extends Activity {
 		overridePendingTransition(R.anim.anim_in_right, R.anim.anim_out_right);
 	    view.startAnimation(receiveActivityVanish);
 	}
+	
+	public void showTutorialAlert()
+	{
+		String[] pref = {"Don't show tutorial again"};
+		//final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+		alertDialog.setTitle("Tutorial Completed")		
+		.setMultiChoiceItems(pref, null, new DialogInterface.OnMultiChoiceClickListener() {				
+	
+			@Override
+			public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+				// TODO Auto-generated method stub
+				 switch (which) {
+                 case 0:                                                       	
+                 	preferences.putBoolean("firstTime", true);          		    
+                     break;                   
+                 default:
+                     break;
+                 }
+//				
+			}          
+           })
+           .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+               @Override
+               public void onClick(DialogInterface dialog, int id) {
+                   // User clicked OK, so save the mSelectedItems results somewhere
+                   // or return them to the component that opened the dialog	
+            	   dialog.dismiss();		               
+               }
+           });
+		alertDialog.create();
+		alertDialog.show();
+	}
+
 	
 }

@@ -10,7 +10,12 @@
     
     <item android:id="@+id/action_logout"
           android:icon="@drawable/systemlogoutt"
-          android:title="logout"
+          android:title="Logout"
+          android:showAsAction="always" />
+    
+    <item android:id="@+id/action_tutorial"
+          android:icon="@drawable/tutorial"
+          android:title="Tutorial"
           android:showAsAction="always" />
     
     <item android:id="@+id/action_info"
