@@ -1286,7 +1286,7 @@ AccelerometerListener {
 			// Set the bitmap into ImageView
 			//			image.setImageBitmap(result);
 			mProgressDialog.dismiss();
-			if(result.isEmpty())
+			if(result == null)
 			{
 
 				if(_return_val.equals(_FAILED_COORDINATES_)) //can't get coordinates

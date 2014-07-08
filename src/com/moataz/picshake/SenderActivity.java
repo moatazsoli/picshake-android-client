@@ -1480,51 +1480,49 @@ AccelerometerListener {
 	        super.onPostExecute(result);
 	        spinner.setVisibility(View.GONE);
 	        
-	        if(!result.isEmpty())
-	        {	        	
-				if(result.equals(_FAILED_COORDINATES_)) //can't get coordinates
-				{
-					passcode.setText("");
-					AlertDialog.Builder builder = new AlertDialog.Builder(SenderActivity.this);
-					String message = "Please make sure that your GPS is enabled and your Google Location Settings is enabled as well and try again.";
-					builder.setTitle("Can't Access Location")
-						   .setMessage(message)
-					       .setCancelable(false)
-					       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					           public void onClick(DialogInterface dialog, int id) {
-					        	   finish();
-					           }
-					       });
-					AlertDialog alert = builder.create();
-					alert.show();
-					
-				}else if(result.equals(_FAILED_CONNECTION_)){
-					passcode.setText("");
-					AlertDialog.Builder builder = new AlertDialog.Builder(SenderActivity.this);
-					String message = "Please make sure that your GPS is enabled and your have internet connectivity.";
-					builder.setTitle("Failed Connection")
-						   .setMessage(message)
-					       .setCancelable(false)
-					       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					           public void onClick(DialogInterface dialog, int id) {
-					        	   finish();
-					           }
-					       });
-					AlertDialog alert = builder.create();
-					alert.show();
-				}else if(result.equals(_FAILED_GET_URL_)){
-					passcode.setText("");
-					runOnUiThread(new Runnable() {
-						public void run() {
-							Toast.makeText(SenderActivity.this, "Failed to connect to the server. Please try again later.", 
-									Toast.LENGTH_SHORT).show();
-						}
-					}); 
-					finish();
-				}else if(result.equals(_SUCESS_)){
-					addItemsFromJsonToList(strToParse);
-				}
-	        }
+			if(result.equals(_FAILED_COORDINATES_)) //can't get coordinates
+			{
+				passcode.setText("");
+				AlertDialog.Builder builder = new AlertDialog.Builder(SenderActivity.this);
+				String message = "Please make sure that your GPS is enabled and your Google Location Settings is enabled as well and try again.";
+				builder.setTitle("Can't Access Location")
+					   .setMessage(message)
+				       .setCancelable(false)
+				       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				        	   finish();
+				           }
+				       });
+				AlertDialog alert = builder.create();
+				alert.show();
+				
+			}else if(result.equals(_FAILED_CONNECTION_)){
+				passcode.setText("");
+				AlertDialog.Builder builder = new AlertDialog.Builder(SenderActivity.this);
+				String message = "Please make sure that your GPS is enabled and your have internet connectivity.";
+				builder.setTitle("Failed Connection")
+					   .setMessage(message)
+				       .setCancelable(false)
+				       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				        	   finish();
+				           }
+				       });
+				AlertDialog alert = builder.create();
+				alert.show();
+			}else if(result.equals(_FAILED_GET_URL_)){
+				passcode.setText("");
+				runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(SenderActivity.this, "Failed to connect to the server. Please try again later.", 
+								Toast.LENGTH_SHORT).show();
+					}
+				}); 
+				finish();
+			}else if(result.equals(_SUCESS_)){
+				addItemsFromJsonToList(strToParse);
+			}
+			
 	        
 	    }
 	}
