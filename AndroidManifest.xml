@@ -82,6 +82,19 @@
             android:name="com.moataz.picshake.List"
             android:label="@string/title_activity_list" >
         </activity>
+        
+        <activity android:name="com.moataz.picshake.ui.ImageGridActivity"
+                  android:label="@string/app_name">
+        </activity>
+
+        <activity
+            android:name="com.moataz.picshake.ui.ImageDetailActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppThemeDark.FullScreen" >
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.moataz.picshake.ui.ImageGridActivity" />
+        </activity>
+        
     </application>
 
 </manifest>

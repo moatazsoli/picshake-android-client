@@ -16,14 +16,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
@@ -46,19 +44,16 @@ import android.content.SharedPreferences;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
-import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -91,7 +86,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.moataz.picshake.SenderActivity.LoadPublicTags;
+import com.moataz.picshake.ui.ImageGridActivity;
 import com.nhaarman.listviewanimations.swinginadapters.prepared.AlphaInAnimationAdapter;
 
 public class ReceiverActivity extends FragmentActivity implements
@@ -116,7 +111,8 @@ AccelerometerListener {
     private final String _SAVEDUSER_ = "saveduser";
 	private SecurePreferences preferences;
 	private String username;
-	
+	private ArrayList<String> thumbs= new ArrayList<String>();
+	private ArrayList<String> pics= new ArrayList<String>();
 	private TextView messageText;
 	private Button uploadButton;
     private int serverResponseCode = 0;
@@ -262,6 +258,7 @@ AccelerometerListener {
 	    
 	        }
 	   });
+	    
 	    
 	}
 	
@@ -852,7 +849,7 @@ AccelerometerListener {
 		return null;
 	}
 	
-	public static HashMap<String, Object> getItemsMapFromJsonReply(String aInStr)
+	public HashMap<String, Object> getItemsMapFromJsonReply(String aInStr)
 	{
 		 // images JSONArray
 	    JSONArray images = null;
@@ -877,7 +874,8 @@ AccelerometerListener {
                         int size = c.getInt("size");
                         String url = c.getString("url");
                         String thumb = c.getString("thumb");
- 
+                        thumbs.add(thumb);
+                        pics.add(url);
                         // tmp hashmap for single contact
                         HashMap<String, Object> image = new HashMap<String, Object>();
  
@@ -1204,6 +1202,8 @@ AccelerometerListener {
 			super.onPreExecute();
 			mLatitude = getLat();
 			mLongitude = getLng();
+			thumbs.clear();
+			pics.clear();
 			_return_val="";
 			error = false;
 			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
@@ -1344,13 +1344,18 @@ AccelerometerListener {
 					});
 				}
 			}else{
+				
+				Intent i = new Intent (ReceiverActivity.this,ImageGridActivity.class);
+				i.putExtra("thumbs", thumbs);
+				i.putExtra("pics", pics);
+				startActivity(i);
+				finish();
 				// List<String> z;
 				//					listVar.clear();
 				//					imagesTemp.clear();
-				imagesTemp = (ArrayList<HashMap<String, Object>>) result.get("list");
-				new DownloadThumbnails()
-				.execute(imagesTemp);
-
+//				imagesTemp = (ArrayList<HashMap<String, Object>>) result.get("list");
+//				new DownloadThumbnails()
+//				.execute(imagesTemp);
 			}
 		}
 	}
@@ -1855,6 +1860,8 @@ AccelerometerListener {
 		if (aInStr != null) {
 			try {
 				jsonObj = new JSONObject(aInStr);
+				publicTags.clear();
+				lv.clearChoices();
 				if(jsonObj.has("list") && jsonObj.has("counter"))
 				{
 					obj = jsonObj.getJSONArray("list");

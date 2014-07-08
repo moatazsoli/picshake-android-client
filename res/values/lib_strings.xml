@@ -31,7 +31,10 @@
     <string name="connection_error_outdated">Google Play services is out of date</string>
     <string name="connection_error_sign_in_required">The user is not signed in</string>
     <string name="connection_error_unknown">An unknown error occurred</string>
-    
+     <string name="clear_cache_menu">Clear Caches</string>
+    <string name="clear_cache_complete_toast">Caches have been cleared</string>
+    <string name="imageview_description">Image Thumbnail</string>
+    <string name="no_network_connection_toast">No network connection found</string>
     
     <!--Errors and messages -->
     
