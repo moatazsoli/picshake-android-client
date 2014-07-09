@@ -15,20 +15,9 @@
   limitations under the License.
 -->
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+<resources>
 
-    <ProgressBar
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center" />
+    <dimen name="image_thumbnail_size">198dp</dimen>
+    <dimen name="image_thumbnail_spacing">2dp</dimen>
 
-    <com.moataz.picshake.ui.RecyclingImageView
-        android:id="@+id/imageView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:contentDescription="@string/imageview_description" />
-
-</FrameLayout>
+</resources>
