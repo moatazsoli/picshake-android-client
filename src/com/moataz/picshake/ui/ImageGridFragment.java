@@ -66,21 +66,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.android.common.logger.Log;
-import com.example.android.displayingbitmaps.provider.Images;
-import com.example.android.displayingbitmaps.util.ImageCache;
-import com.example.android.displayingbitmaps.util.ImageFetcher;
-import com.example.android.displayingbitmaps.util.Utils;
 import com.moataz.picshake.BuildConfig;
 import com.moataz.picshake.R;
-import com.moataz.picshake.R.dimen;
-import com.moataz.picshake.R.drawable;
-import com.moataz.picshake.R.id;
-import com.moataz.picshake.R.layout;
-import com.moataz.picshake.R.menu;
-import com.moataz.picshake.R.string;
-import com.moataz.picshake.ReceiverActivity;
 import com.moataz.picshake.SingleMediaScanner;
+import com.moataz.picshake.logger.Log;
+import com.moataz.picshake.util.ImageCache;
+import com.moataz.picshake.util.ImageFetcher;
+import com.moataz.picshake.util.Utils;
 
 /**
  * The main fragment that powers the ImageGridActivity screen. Fairly straight forward GridView

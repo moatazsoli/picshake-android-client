@@ -45,8 +45,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.util.LruCache;
 
-import com.example.android.common.logger.Log;
 import com.moataz.picshake.BuildConfig;
+import com.moataz.picshake.logger.Log;
 
 /**
  * This class handles disk and memory caching of bitmaps in conjunction with the

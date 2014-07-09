@@ -36,17 +36,11 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager.LayoutParams;
 import android.widget.Toast;
 
-import com.example.android.displayingbitmaps.provider.Images;
-import com.example.android.displayingbitmaps.util.ImageCache;
-import com.example.android.displayingbitmaps.util.ImageFetcher;
-import com.example.android.displayingbitmaps.util.Utils;
 import com.moataz.picshake.BuildConfig;
 import com.moataz.picshake.R;
-import com.moataz.picshake.R.dimen;
-import com.moataz.picshake.R.id;
-import com.moataz.picshake.R.layout;
-import com.moataz.picshake.R.menu;
-import com.moataz.picshake.R.string;
+import com.moataz.picshake.util.ImageCache;
+import com.moataz.picshake.util.ImageFetcher;
+import com.moataz.picshake.util.Utils;
 
 public class ImageDetailActivity extends FragmentActivity implements OnClickListener {
     private static final String IMAGE_CACHE_DIR = "images";

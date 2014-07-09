@@ -33,9 +33,9 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.widget.Toast;
 
-import com.example.android.common.logger.Log;
 import com.moataz.picshake.BuildConfig;
 import com.moataz.picshake.R;
+import com.moataz.picshake.logger.Log;
 
 /**
  * A simple subclass of {@link ImageResizer} that fetches and resizes images fetched from a URL.

@@ -30,8 +30,8 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.widget.ImageView;
 
-import com.example.android.common.logger.Log;
 import com.moataz.picshake.BuildConfig;
+import com.moataz.picshake.logger.Log;
 
 /**
  * This class wraps up completing some arbitrary long running work when loading a bitmap to an

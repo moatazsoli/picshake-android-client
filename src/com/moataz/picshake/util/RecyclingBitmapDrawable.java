@@ -20,8 +20,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 
-import com.example.android.common.logger.Log;
 import com.moataz.picshake.BuildConfig;
+import com.moataz.picshake.logger.Log;
 
 /**
  * A BitmapDrawable that keeps track of whether it is being displayed or cached.

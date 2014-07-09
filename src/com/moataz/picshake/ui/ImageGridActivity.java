@@ -22,8 +22,8 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 
-import com.example.android.displayingbitmaps.util.Utils;
 import com.moataz.picshake.BuildConfig;
+import com.moataz.picshake.util.Utils;
 
 /**
  * Simple FragmentActivity to hold the main {@link ImageGridFragment} and not much else.

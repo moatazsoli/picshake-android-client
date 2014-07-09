@@ -25,8 +25,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 
-import com.example.android.common.logger.Log;
 import com.moataz.picshake.BuildConfig;
+import com.moataz.picshake.logger.Log;
 
 /**
  * A simple subclass of {@link ImageWorker} that resizes images from resources given a target width

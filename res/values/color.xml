@@ -20,5 +20,7 @@
     <color name="login_font_color_1">#546778</color>
     <color name="login_font_color_2">#8E8E8E</color>
     <color name="blue_txt">#0f5690</color>
+    <color name="grid_state_pressed">#1Affffff</color>
+    <color name="grid_state_focused">#80000000</color>
 
 </resources>
