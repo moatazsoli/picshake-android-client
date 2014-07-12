@@ -1589,6 +1589,8 @@ AccelerometerListener {
 		private final String _FAILED_COORDINATES_ = "601";
 		private final String _FAILED_GET_URL_ = "602";
 		private final String _FAILED_CONNECTION_ = "603";
+		private final String _NO_NEARBY_PUBLIC_TAGS = "7002";
+		private final String _ERROR_ = "7005"; 
 		@Override
 	    protected void onPreExecute() {
 	        super.onPreExecute();
@@ -1602,8 +1604,8 @@ AccelerometerListener {
 	    	if (!isGPSEnabled() || !isNetworkAvailable()) {
 	    		return _FAILED_CONNECTION_;
 	    	}else if(mLatitude.equals("") || mLongitude.equals("") ) {
-				return _FAILED_COORDINATES_;
-			}else{
+	    		return _FAILED_COORDINATES_;
+	    	}else{
 
 	    		String myURL = "https://hezzapp.appspot.com/getpubpasscodes";
 
@@ -1614,7 +1616,7 @@ AccelerometerListener {
 	    		String paramsString = URLEncodedUtils.format(nameValuePairs, "UTF-8");
 
 	    		String downloadUrl="";
-	    		
+
 	    		try {
 	    			HttpClient client = new DefaultHttpClient();
 	    			HttpGet request = new HttpGet(myURL + "?" + paramsString);
@@ -1628,28 +1630,25 @@ AccelerometerListener {
 	    			if(!(serverResponseCode == 200)){
 	    				return _FAILED_GET_URL_;
 	    			}else{
-	    			while ((sResponse1 = reader1.readLine()) != null) {
-	    				s1 = s1.append(sResponse1);
-	    			}
-	    			if(s1.toString().equals("7002")) //No Image Found Error Code
-	    			{
-	    				return null;
-	    			}
-	    			//JSON Parsing
-	    			strToParse = s1.toString();
-
-	    			//downloadUrl = s1.toString();
-	    			System.out.println(downloadUrl);
+	    				while ((sResponse1 = reader1.readLine()) != null) {
+	    					s1 = s1.append(sResponse1);
+	    				}
+	    				if(s1.toString().equals(_NO_NEARBY_PUBLIC_TAGS)) //No Image Found Error Code
+	    				{
+	    					return _NO_NEARBY_PUBLIC_TAGS;
+	    				}
+	    				strToParse = s1.toString();
+	    				if(!strToParse.equals(""))
+	    				{
+	    					return _SUCESS_;
+	    				}else{
+	    					return _ERROR_;
+	    				}
 	    			}
 	    		} catch (Exception e) {
 	    			System.out.println(e.toString());
-	    		}
-
-	    		if(strToParse.equals(""))
-	    		{
 	    			return null;
 	    		}
-	    		return _SUCESS_;
 	    	}
 	    }
 	    @Override
