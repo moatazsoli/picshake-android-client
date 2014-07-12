@@ -1147,11 +1147,10 @@ AccelerometerListener {
 
 	}
 
-	private class GetImageUrls extends AsyncTask<Void, Void, HashMap<String, Object>> {
+	private class GetImageUrls extends AsyncTask<Void, Void, String> {
 
 		private boolean error;
-		boolean noConnection;
-		private final String _SUCESS_ = "600";
+		private final String _SUCCESS_ = "600";
 		private final String _FAILED_COORDINATES_ = "601";
 		private final String _FAILED_GET_URL_ = "602";
 		private final String _FAILED_CONNECTION_ = "603";
@@ -1173,7 +1172,7 @@ AccelerometerListener {
 		}
 
 		@Override
-		protected HashMap<String, Object> doInBackground(Void... params) {	
+		protected String doInBackground(Void... params) {	
 			
 			if (!isGPSEnabled() || !isNetworkAvailable()) {
 				_return_val =  _FAILED_CONNECTION_;
@@ -1229,19 +1228,19 @@ AccelerometerListener {
 				{
 					return null;
 				}
-				HashMap<String,Object> returnedHashMap = getItemsMapFromJsonReply(strToParse);
+				getItemsMapFromJsonReply(strToParse);
 				//			List<String> items = getItemsFromJsonReply(strToParse);
 				//			if(items.size()==0)
 				//			{
 				//				return null;
 				//			}
-				return returnedHashMap;
+				return _SUCCESS_;
 			}
 		}
 
 		@SuppressWarnings("unchecked")
 		@Override
-		protected void onPostExecute(HashMap<String, Object> result) {
+		protected void onPostExecute(String result) {
 			// Set the bitmap into ImageView
 			//			image.setImageBitmap(result);
 			mProgressDialog.dismiss();
@@ -1319,141 +1318,6 @@ AccelerometerListener {
 		}
 	}
 	
-	private class DownloadImages extends AsyncTask<Set<Integer>, String, Integer> {
-		
-		int count=1;
-
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			
-			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
-			mProgressDialog.setMessage("Downloading Full Size Images. Please wait...");
-			mProgressDialog.setIndeterminate(false);
-			mProgressDialog.setMax(100);
-			mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-			mProgressDialog.setCanceledOnTouchOutside(false);
-			//later on allow user to cancel and set the button callback to cancel and exit the download process
-			//mProgressDialog.setCancelable(true);
-			mProgressDialog.show();
-		}
-
-		@Override
-		protected Integer doInBackground(Set<Integer>... list) {
-			
-			Set<Integer> items = list[0];
-			final int size= items.size();
-			String imageURL = "";
-			Bitmap bitmap;
-			HashMap<String, Object> tempMap;
-			if (items.size() == 0) {
-				return null;
-			}
-			String filepath = "";
-			for (Iterator iterator = items.iterator(); iterator.hasNext();) {
-				
-				runOnUiThread(new Runnable() {
-					public void run() {
-						mProgressDialog.setMessage("Downloading Full Size Images. Please wait... ("+count+"/"+size+")");
-						count++;
-					}
-				});
-				
-				tempMap = thumbnailsMap.get((Integer) iterator.next());
-				
-				imageURL = (String) tempMap.get("url");
-				// TODO check if imageURL is not NULL and do this for all iterators in project
-				try {
-					URL url = new URL(imageURL);
-					HttpURLConnection urlConnection = (HttpURLConnection) url
-							.openConnection();
-					urlConnection.setRequestMethod("GET");
-//					urlConnection.setDoOutput(true);
-					urlConnection.connect();
-
-					String root = Environment.getExternalStorageDirectory()
-							.toString();
-//					System.out.println("ROOOT" + root);
-					File myDir = new File(root + "/Download/");
-					myDir.mkdirs();
-					Random generator = new Random();
-					int n = 10000;
-					n = generator.nextInt(n);
-					String fname = "MYImage-" + n + ".jpg";
-					File file = new File(myDir, fname);
-					if (file.exists())
-						file.delete();
-
-					FileOutputStream fileOutput = new FileOutputStream(file);
-					InputStream inputStream = urlConnection.getInputStream();
-//					long totalSize = urlConnection.getContentLength();
-					Integer totalSize = (Integer) tempMap.get("size");
-					int downloadedSize = 0;
-					byte[] buffer = new byte[1024];
-					int bufferLength = 0;
-					while ((bufferLength = inputStream.read(buffer)) > 0) {
-						fileOutput.write(buffer, 0, bufferLength);
-						downloadedSize += bufferLength;
-						Log.i("Progress:", "downloadedSize:" + downloadedSize
-								+ "totalSize:" + totalSize);
-						//sometimes size returned from server is smaller than actual size
-						if(downloadedSize <= totalSize)
-						{
-							publishProgress(""+(int)((downloadedSize*100)/totalSize));
-						}else{
-							publishProgress(""+100);
-						}
-					}
-					fileOutput.close();
-					new SingleMediaScanner(ReceiverActivity.this, file);
-					if (downloadedSize == totalSize)
-						filepath = file.getPath();
-				} catch (MalformedURLException e) {
-					e.printStackTrace();
-					return null;
-				} catch (IOException e) {
-					filepath = null;
-					e.printStackTrace();
-					return null;
-				}
-				Log.i("filepath:", " " + filepath);
-				showNotification(count-1,size);
-			}
-
-			// fix this return
-			return 1;
-		}
-
-		/**
-         * Updating progress bar
-         * */
-        protected void onProgressUpdate(String... progress) {
-            // setting progress percentage
-        	mProgressDialog.setProgress(Integer.parseInt(progress[0]));
-       }
-        
-		@Override
-		protected void onPostExecute(Integer result) {
-			// Set the bitmap into ImageView
-//			image.setImageBitmap(result);
-			mProgressDialog.dismiss();
-			Toast.makeText(ReceiverActivity.this, "Download Completed. Photos Saved To Gallery", 
-					Toast.LENGTH_SHORT).show();
-			
-			if(result == null)
-			{
-				passcode.setText("");
-				runOnUiThread(new Runnable() {
-					public void run() {
-						Toast.makeText(ReceiverActivity.this, "ERROR!!", 
-								Toast.LENGTH_SHORT).show();
-					}
-				});
-			}
-			
-		}
-	}
-	
 	class LoadPublicTags extends AsyncTask<String, String, String> {
 		ProgressDialog progDailog;
 		boolean noConnection;
@@ -1487,8 +1351,6 @@ AccelerometerListener {
 	    		nameValuePairs.add(new BasicNameValuePair("longitude", mLongitude));
 
 	    		String paramsString = URLEncodedUtils.format(nameValuePairs, "UTF-8");
-
-	    		String downloadUrl="";
 
 	    		try {
 	    			HttpClient client = new DefaultHttpClient();
@@ -1587,7 +1449,6 @@ AccelerometerListener {
 		// Declaring a Location Manager
 		LocationManager locationManager = null;
 		// flag for GPS status
-		boolean canGetLocation = false;
 		try {
 			locationManager = (LocationManager) this
 					.getSystemService(LOCATION_SERVICE);
@@ -1679,50 +1540,6 @@ AccelerometerListener {
 	}
 
 
-	private void showNotification(int imagesReceived, int totalImages) {
-
-		String contextText = new String();
-
-//		Intent intent = new Intent(this, ReceiverActivity.class);
-		Intent intent = new Intent(
-                Intent.ACTION_PICK,
-                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        intent.setType("image/*");
-	    PendingIntent pIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-	    Notification notification;
-	    		
-		if(imagesReceived == totalImages) {
-			contextText = "Successfully downloaded all images!";
-			Uri alarmSound = Uri.parse("android.resource://com.moataz.picshake/" + R.raw.arpeggio);
-//			Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-			notification = new Notification.Builder(getBaseContext())
-									.setContentTitle("PicShake")
-									.setContentText(contextText)
-									.setContentIntent(pIntent)
-									.setSmallIcon( R.drawable.ic_stat_notify_pic)
-									.setLargeIcon(BitmapFactory.decodeResource(getResources(),
-						                R.drawable.ic_launcherorange))
-						            .setSound(alarmSound)
-			                    //    .setLights(Color.BLUE, 500, 500)
-									.build();	
-			
-		}else{
-			contextText = "Successfully downloaded ("+imagesReceived+"/"+totalImages+") images";
-			
-			notification = new Notification.Builder(getBaseContext())
-									.setContentTitle("PicShake")
-									.setContentText(contextText)
-									.setContentIntent(pIntent)
-									.setSmallIcon( R.drawable.ic_stat_notify_pic)
-									.setLargeIcon(BitmapFactory.decodeResource(getResources(),
-						                R.drawable.ic_launcherorange))
-									.build();
-		}
-
-		notificationManager.notify(0, notification); 
-	}
-	
-	
 	public void addItemsFromJsonToList(String aInStr)
 	{
 		// images JSONArray
