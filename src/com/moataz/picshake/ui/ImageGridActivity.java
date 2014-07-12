@@ -39,6 +39,7 @@ public class ImageGridActivity extends FragmentActivity {
         }
         
         super.onCreate(savedInstanceState);
+        getActionBar().setDisplayHomeAsUpEnabled(false);
         pics = (ArrayList<String>) getIntent().getSerializableExtra("pics");
         thumbs = (ArrayList<String>) getIntent().getSerializableExtra("thumbs");
         ImageGridFragment lFragment = new ImageGridFragment();

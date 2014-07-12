@@ -73,7 +73,7 @@ public class SigninPage extends Activity {
 		{
 			showNoInternetSettingsAlert();
 		}
-		
+		getActionBar().setDisplayHomeAsUpEnabled(false);
 			username = (EditText) findViewById(R.id.usernamein);
 			password = (EditText) findViewById(R.id.password1in);
 			stay_signed = (CheckBox) findViewById(R.id.keepmesignedin);

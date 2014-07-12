@@ -239,22 +239,23 @@ containing a value of this type.
          */
         public static final int activity_horizontal_margin=0x7f070002;
         public static final int activity_vertical_margin=0x7f070003;
+        public static final int activity_vertical_margin_receiver=0x7f070004;
         /**  Semantic definitions 
  Semantic definitions 
          */
-        public static final int horizontal_page_margin=0x7f07000b;
-        public static final int image_thumbnail_size=0x7f070004;
-        public static final int image_thumbnail_spacing=0x7f070005;
-        public static final int margin_huge=0x7f07000a;
-        public static final int margin_large=0x7f070009;
-        public static final int margin_medium=0x7f070008;
-        public static final int margin_small=0x7f070007;
+        public static final int horizontal_page_margin=0x7f07000c;
+        public static final int image_thumbnail_size=0x7f070005;
+        public static final int image_thumbnail_spacing=0x7f070006;
+        public static final int margin_huge=0x7f07000b;
+        public static final int margin_large=0x7f07000a;
+        public static final int margin_medium=0x7f070009;
+        public static final int margin_small=0x7f070008;
         /**  Define standard dimensions to comply with Holo-style grids and rhythm. 
          */
-        public static final int margin_tiny=0x7f070006;
+        public static final int margin_tiny=0x7f070007;
         public static final int photo_height=0x7f070001;
         public static final int photo_width=0x7f070000;
-        public static final int vertical_page_margin=0x7f07000c;
+        public static final int vertical_page_margin=0x7f07000d;
     }
     public static final class drawable {
         public static final int background12=0x7f020000;
@@ -332,61 +333,60 @@ containing a value of this type.
     }
     public static final class id {
         public static final int LinearLayout1=0x7f0a000a;
-        public static final int action_info=0x7f0a0036;
-        public static final int action_logout=0x7f0a0034;
-        public static final int action_settings=0x7f0a0033;
-        public static final int action_tutorial=0x7f0a0035;
-        public static final int actual=0x7f0a002c;
-        public static final int btnGalleryOk=0x7f0a0020;
-        public static final int btnGalleryPick=0x7f0a002f;
-        public static final int btnGalleryPickMul=0x7f0a0030;
-        public static final int button1=0x7f0a0011;
-        public static final int button2=0x7f0a0013;
-        public static final int clear_cache=0x7f0a0037;
-        public static final int email=0x7f0a001a;
-        public static final int firstname=0x7f0a0015;
-        public static final int frmQueue=0x7f0a0021;
-        public static final int gridGallery=0x7f0a001d;
-        public static final int gridView=0x7f0a0028;
-        public static final int gridView1=0x7f0a000d;
-        public static final int grid_item_label=0x7f0a0024;
+        public static final int action_info=0x7f0a0035;
+        public static final int action_logout=0x7f0a0033;
+        public static final int action_settings=0x7f0a0032;
+        public static final int action_tutorial=0x7f0a0034;
+        public static final int actual=0x7f0a002b;
+        public static final int btnGalleryOk=0x7f0a001f;
+        public static final int btnGalleryPick=0x7f0a002e;
+        public static final int btnGalleryPickMul=0x7f0a002f;
+        public static final int button1=0x7f0a0010;
+        public static final int button2=0x7f0a0012;
+        public static final int clear_cache=0x7f0a0036;
+        public static final int email=0x7f0a0019;
+        public static final int firstname=0x7f0a0014;
+        public static final int frmQueue=0x7f0a0020;
+        public static final int gridGallery=0x7f0a001c;
+        public static final int gridView=0x7f0a0027;
+        public static final int grid_item_label=0x7f0a0023;
         public static final int hybrid=0x7f0a0004;
-        public static final int imageView=0x7f0a0026;
-        public static final int imgNoMedia=0x7f0a001e;
-        public static final int imgQueue=0x7f0a0022;
-        public static final int imgQueueMultiSelected=0x7f0a0023;
-        public static final int imgSinglePick=0x7f0a002e;
-        public static final int ivOverlayEntertask=0x7f0a0032;
-        public static final int keepmesignedin=0x7f0a0012;
-        public static final int label=0x7f0a0025;
-        public static final int lastname=0x7f0a0016;
-        public static final int linearLayout1=0x7f0a0014;
+        public static final int imageView=0x7f0a0025;
+        public static final int imgNoMedia=0x7f0a001d;
+        public static final int imgQueue=0x7f0a0021;
+        public static final int imgQueueMultiSelected=0x7f0a0022;
+        public static final int imgSinglePick=0x7f0a002d;
+        public static final int ivOverlayEntertask=0x7f0a0031;
+        public static final int keepmesignedin=0x7f0a0011;
+        public static final int label=0x7f0a0024;
+        public static final int lastname=0x7f0a0015;
+        public static final int linearLayout1=0x7f0a0013;
         public static final int listView=0x7f0a0006;
-        public static final int llBottomContainer=0x7f0a001f;
-        public static final int llOverlay_activity=0x7f0a0031;
-        public static final int medium=0x7f0a002b;
+        public static final int llBottomContainer=0x7f0a001e;
+        public static final int llOverlay_activity=0x7f0a0030;
+        public static final int medium=0x7f0a002a;
         public static final int none=0x7f0a0000;
         public static final int normal=0x7f0a0001;
-        public static final int pager=0x7f0a0027;
-        public static final int passcode=0x7f0a000e;
+        public static final int pager=0x7f0a0026;
+        public static final int passcode=0x7f0a000d;
         public static final int passcode_recv=0x7f0a000c;
-        public static final int password1=0x7f0a0018;
-        public static final int password1in=0x7f0a0010;
-        public static final int password2=0x7f0a0019;
+        public static final int password1=0x7f0a0017;
+        public static final int password1in=0x7f0a000f;
+        public static final int password2=0x7f0a0018;
         public static final int progressBar1=0x7f0a0005;
-        public static final int radioGroup=0x7f0a0029;
+        public static final int radioGroup=0x7f0a0028;
         public static final int receiveActivityButton=0x7f0a0007;
         public static final int satellite=0x7f0a0002;
         public static final int sendActivityButton=0x7f0a0009;
-        public static final int small=0x7f0a002a;
-        public static final int submit=0x7f0a001c;
+        public static final int small=0x7f0a0029;
+        public static final int submit=0x7f0a001b;
         public static final int takePicButton=0x7f0a0008;
         public static final int terrain=0x7f0a0003;
-        public static final int textView1=0x7f0a001b;
+        public static final int textView1=0x7f0a001a;
         public static final int textView2=0x7f0a000b;
-        public static final int username=0x7f0a0017;
-        public static final int usernamein=0x7f0a000f;
-        public static final int viewSwitcher=0x7f0a002d;
+        public static final int username=0x7f0a0016;
+        public static final int usernamein=0x7f0a000e;
+        public static final int viewSwitcher=0x7f0a002c;
     }
     public static final class integer {
         public static final int google_play_services_version=0x7f0b0000;

@@ -32,13 +32,18 @@ import java.util.Set;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.ActivityOptions;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
@@ -48,11 +53,13 @@ import android.support.v4.app.Fragment;
 import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver;
@@ -88,14 +95,14 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private Drawable checkmarkDrawable;
     private Bitmap checkmarkBitmap;
     private int mImageThumbSize;
+    private NotificationManager notificationManager;
     private int mImageThumbSpacing;
     private ImageAdapter mAdapter;
     private ImageFetcher mImageFetcher;
     private GridView mGridView;
-    private Cursor cursor;
-    private int columnIndex;
     private ArrayList <String> picsUrls;
     private ArrayList <String> thumbsUrls;
+    private boolean mActionModeStarted = false;
     
     private int numCols=0;
     /**
@@ -113,6 +120,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     		picsUrls = bundle.getStringArrayList("pics");
     		thumbsUrls = bundle.getStringArrayList("thumbs");
     	}
+    	
     	
         setHasOptionsMenu(true);
         checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark1)).getBitmap();
@@ -132,13 +140,15 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mImageFetcher.setLoadingImage(R.drawable.empty_photo);
         mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
     }
-
+    
+    
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	@Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         final View v = inflater.inflate(R.layout.image_grid_fragment, container, false);
+        notificationManager = (NotificationManager)  getActivity().getSystemService(getActivity().NOTIFICATION_SERVICE);
         mGridView = (GridView) v.findViewById(R.id.gridView);
         mGridView.setAdapter(mAdapter);
         mGridView.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
@@ -163,6 +173,19 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     int visibleItemCount, int totalItemCount) {
             }
         });
+    	v.setOnKeyListener(new View.OnKeyListener() {
+    	        @Override
+    	        public boolean onKey(View v, int keyCode, KeyEvent event) {
+    	            if( keyCode == KeyEvent.KEYCODE_BACK ) {
+    	            	if(mActionModeStarted)
+    	            		selectedPositions.clear();
+    	                return false;
+    	            } else {
+    	                return false;
+    	            }
+    	        }
+    	    });
+        
 
         // This listener is used to get the final width of the GridView and then calculate the
         // number of columns and the width of each column. The width of each column is variable
@@ -210,6 +233,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 		}
 
 		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+			mActionModeStarted = true;
 			return true;
 		}
 
@@ -219,6 +243,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
 		@SuppressWarnings("unchecked")
 		public void onDestroyActionMode(ActionMode mode) {
+			mActionModeStarted = false;
 			if (selectedPositions.size() > 0) {
 				// TODO add warning regarding sizes , maybe > 5 Mbs
 				new DownloadImages().execute(selectedPositions.keySet());
@@ -252,7 +277,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         super.onResume();
         mImageFetcher.setExitTasksEarly(false);
         mAdapter.notifyDataSetChanged();
+        notificationManager.cancel(0);
     }
+    
 
     @Override
     public void onPause() {
@@ -505,8 +532,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 				Set<Integer> items = list[0];
 				final int size= items.size();
 				String imageURL = "";
-				Bitmap bitmap;
-				HashMap<String, Object> tempMap;
 				if (items.size() == 0) {
 					return null;
 				}
@@ -579,7 +604,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 					}
 					Log.i("filepath:", " " + filepath);
 					
-//					showNotification(count-1,size);
+					showNotification(count-1,size);
 				}
 	
 				// fix this return
@@ -614,4 +639,47 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 				
 			}
 		}
+	
+	private void showNotification(int imagesReceived, int totalImages) {
+
+		String contextText = new String();
+
+//		Intent intent = new Intent(this, ReceiverActivity.class);
+		Intent intent = new Intent(
+                Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+	    PendingIntent pIntent = PendingIntent.getActivity(getActivity(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+	    Notification notification;
+	    		
+		if(imagesReceived == totalImages) {
+			contextText = "Successfully downloaded all images!";
+			Uri alarmSound = Uri.parse("android.resource://com.moataz.picshake/" + R.raw.arpeggio);
+//			Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+			notification = new Notification.Builder(getActivity().getBaseContext())
+									.setContentTitle("PicShake")
+									.setContentText(contextText)
+									.setContentIntent(pIntent)
+									.setSmallIcon( R.drawable.ic_stat_notify_pic)
+									.setLargeIcon(BitmapFactory.decodeResource(getResources(),
+						                R.drawable.ic_launcherorange))
+						            .setSound(alarmSound)
+			                    //    .setLights(Color.BLUE, 500, 500)
+									.build();	
+			
+		}else{
+			contextText = "Successfully downloaded ("+imagesReceived+"/"+totalImages+") images";
+			
+			notification = new Notification.Builder(getActivity().getBaseContext())
+									.setContentTitle("PicShake")
+									.setContentText(contextText)
+									.setContentIntent(pIntent)
+									.setSmallIcon( R.drawable.ic_stat_notify_pic)
+									.setLargeIcon(BitmapFactory.decodeResource(getResources(),
+						                R.drawable.ic_launcherorange))
+									.build();
+		}
+
+		notificationManager.notify(0, notification); 
+	}
 }

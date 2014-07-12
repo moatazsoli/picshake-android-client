@@ -188,7 +188,7 @@ AccelerometerListener {
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		username = preferences.getString(_SAVEDUSER_);
 		maxBitmapSize = new int[1]; 
-
+		getActionBar().setDisplayHomeAsUpEnabled(false);
 		//Get the max bitmap size this hardware can store
 		GLES10.glGetIntegerv(GL10.GL_MAX_TEXTURE_SIZE, maxBitmapSize, 0);
 

@@ -113,18 +113,8 @@ AccelerometerListener {
 	private String username;
 	private ArrayList<String> thumbs= new ArrayList<String>();
 	private ArrayList<String> pics= new ArrayList<String>();
-	private TextView messageText;
-	private Button uploadButton;
     private int serverResponseCode = 0;
-    private ProgressDialog dialog = null;
-    private Bitmap bm;
-    private String picture_path = null; 
-    private String URL = "";
-    private TextView text;
     private ProgressDialog mProgressDialog;
-    private ProgressDialog pProgressDialog;
-    private GridView mGrid;
-    private List<ResolveInfo> mApps;
     HashMap<String, Object> y;
     ArrayList<HashMap<String, Object>> imagesTemp;
     HashMap<Integer, String> selectedPositions;
@@ -137,12 +127,9 @@ AccelerometerListener {
 	
 	private String mLongitude;
 	// Handles to UI widgets
-	private TextView mLatLng;
-//	private TextView mAddress;
 //	private ProgressBar mActivityIndicator;
 	private TextView mConnectionState;
 	private TextView mConnectionStatus;
-	private TextView textView1;
 	private EditText passcode;
 
 	// Handle to SharedPreferences for this app
@@ -180,14 +167,6 @@ AccelerometerListener {
 		overridePendingTransition(R.anim.anim_in_left, R.anim.anim_out_left);
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		username = preferences.getString(_SAVEDUSER_);
-		
-		//setting up and hiding the GridView
-		mGrid = (GridView) findViewById(R.id.gridView1);
-		textView1 = (TextView) findViewById(R.id.textView2);
-		mGrid.setVisibility(View.GONE);
-		
-		checkmarkBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.greencheckmark22)).getBitmap();
-		checkmarkDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(checkmarkBitmap, 150, 150, false));
 		
 		imgUrlsList = new ArrayList<String>();
 		// Upload stuff
@@ -283,19 +262,19 @@ AccelerometerListener {
 	    return super.dispatchKeyEvent(event);
 	}
 	
-	public void viewThumbnails() {
-
-		lv.setVisibility(View.GONE);
-		passcode.setVisibility(View.GONE);
-		textView1.setVisibility(View.GONE);
-		mGrid.setVisibility(View.VISIBLE);
-		mGrid.setAdapter(new ThumbnailsAdapter());
-		mGrid.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
-		mGrid.setMultiChoiceModeListener(new MultiChoiceModeListener());
-		Toast.makeText(ReceiverActivity.this, "Press and Hold to Select the Pictures", 
-				Toast.LENGTH_LONG).show();
-
-	}
+//	public void viewThumbnails() {
+//
+//		lv.setVisibility(View.GONE);
+//		passcode.setVisibility(View.GONE);
+//		textView1.setVisibility(View.GONE);
+//		mGrid.setVisibility(View.VISIBLE);
+//		mGrid.setAdapter(new ThumbnailsAdapter());
+//		mGrid.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
+//		mGrid.setMultiChoiceModeListener(new MultiChoiceModeListener());
+//		Toast.makeText(ReceiverActivity.this, "Press and Hold to Select the Pictures", 
+//				Toast.LENGTH_LONG).show();
+//
+//	}
 
 
 
@@ -324,32 +303,12 @@ AccelerometerListener {
 		@SuppressWarnings("unchecked")
 		public void onDestroyActionMode(ActionMode mode) {
 			mActionModeStarted = false;
-			if(mGrid.getCheckedItemCount()>0)
-			{
-				//TODO add warning regarding sizes , maybe > 5 Mbs
-				new DownloadImages().execute(selectedPositions.keySet());
-			}
 		}
 
 
 
 		public void onItemCheckedStateChanged(ActionMode mode, int position,
 				long id, boolean checked) {
-			int selectCount = mGrid.getCheckedItemCount();
-			switch (selectCount) {
-			case 1:
-				selectedPositions.clear();
-				mode.setSubtitle("One item selected");
-				break;
-			default:
-				mode.setSubtitle("" + selectCount + " items selected");
-				break;
-			}
-			if (checked) {
-				selectedPositions.put(position, "");
-			} else {
-				selectedPositions.remove(position);
-			}
 
 		}
 
@@ -444,7 +403,7 @@ AccelerometerListener {
 	 */
 	private void setupActionBar() {
 
-		getActionBar().setDisplayHomeAsUpEnabled(true);
+		getActionBar().setDisplayHomeAsUpEnabled(false);
 
 	}
 
@@ -1207,7 +1166,7 @@ AccelerometerListener {
 			_return_val="";
 			error = false;
 			mProgressDialog = new ProgressDialog(ReceiverActivity.this);
-			mProgressDialog.setTitle("Searching For Photos");
+			mProgressDialog.setTitle("Searching For Pictures");
 			mProgressDialog.setMessage("Please Wait...");
 			mProgressDialog.setIndeterminate(false);
 			mProgressDialog.show();
@@ -1490,92 +1449,6 @@ AccelerometerListener {
 								Toast.LENGTH_SHORT).show();
 					}
 				});
-			}
-			
-		}
-	}
-	
-	private class DownloadThumbnails extends AsyncTask<ArrayList<HashMap<String, Object>>, Void, ArrayList<HashMap<String, Object>>> {
-
-		
-		private HashMap<String, Object> temp;
-		ArrayList<HashMap<String, Object>> imageList;
-		private Bitmap bitmap;
-		private String thumbUrl;
-		
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			imageList = new ArrayList<HashMap<String, Object>>();
-			pProgressDialog = new ProgressDialog(ReceiverActivity.this);
-			pProgressDialog.setTitle("Previewing Photos");
-			pProgressDialog.setMessage("Please Wait...");
-			pProgressDialog.setIndeterminate(false);
-			pProgressDialog.show();
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		protected ArrayList<HashMap<String, Object>> doInBackground(ArrayList<HashMap<String, Object>>... list) {
-			ArrayList<HashMap<String, Object>> items = list[0];
-			
-			if(items.size()==0)
-			{
-				return null;
-			}
-			for (Iterator iterator = items.iterator(); iterator.hasNext();) 
-			{
-				temp =(HashMap<String, Object>) iterator.next();
-				if(temp.containsKey("thumb"))
-				{
-					thumbUrl = (String) temp.get("thumb");
-					bitmap = null;
-					try {
-						// Download Image from URL
-						InputStream input = new java.net.URL(thumbUrl).openStream();
-						// Decode Bitmap
-						bitmap = BitmapFactory.decodeStream(input);
-//						HashMap<String, Object> newHashMap = new HashMap<String, Object>();
-//						newHashMap.put("no", (Integer) temp.get("no"));
-//						newHashMap.put("img", bitmap);
-						// might raise performance issue, passing whole arraylist , bitmaps plus size and urls
-						//may be use separate array just mapping img to no "id".
-						temp.put("img", bitmap);
-						imageList.add(temp);
-					} catch (Exception e) {
-						Toast.makeText(ReceiverActivity.this, "ERROR while downloading Thumbnails!!", 
-								Toast.LENGTH_SHORT).show();
-						e.printStackTrace();
-						return null;
-					}
-				}
-				
-			}
-			//fix this return .. might have been already fixed
-			return imageList;
-		}
-
-		@Override
-		protected void onPostExecute(ArrayList<HashMap<String, Object>> result) {
-			pProgressDialog.dismiss();
-			thumbnailsMap = result;
-			if(result == null)
-			{
-				runOnUiThread(new Runnable() {
-					public void run() {
-						Toast.makeText(ReceiverActivity.this, "ERROR!! Downloading thumbnails", 
-								Toast.LENGTH_SHORT).show();
-					}
-				});
-			}else{
-				if(thumbnailsMap.size()>0)
-				{
-					viewThumbnails(); // viewThumbnails
-				}else{
-					Toast.makeText(ReceiverActivity.this, "ERROR!! Viewing thumbnails", 
-							Toast.LENGTH_SHORT).show();
-				}
-				
 			}
 			
 		}
