@@ -2,26 +2,32 @@
 
     <item
         android:id="@+id/action_settings"
+        android:icon="@drawable/ic_action_overflow"
         android:orderInCategory="100"
         android:showAsAction="always"
-        android:icon="@drawable/ic_action_overflow"
         android:title="@string/action_settings">
-    <menu>
-    
-    <item android:id="@+id/action_logout"
-          android:icon="@drawable/systemlogoutt"
-          android:title="Logout"
-          android:showAsAction="always" />
-    
-    <item android:id="@+id/action_tutorial"
-          android:icon="@drawable/tutorial"
-          android:title="Tutorial"
-          android:showAsAction="always" />
-    
-    <item android:id="@+id/action_info"
-          android:icon="@drawable/ic_action_help"
-          android:title="About"
-          android:showAsAction="always" />
-    </menu>
+        <menu>
+            <item
+                android:id="@+id/action_share"
+                android:icon="@drawable/ic_action_share"
+                android:showAsAction="always"
+                android:title="Share the app"/>
+            <item
+                android:id="@+id/action_tutorial"
+                android:icon="@drawable/ic_action_play_over_video"
+                android:showAsAction="always"
+                android:title="Tutorial"/>
+            <item
+                android:id="@+id/action_info"
+                android:icon="@drawable/ic_action_about"
+                android:showAsAction="always"
+                android:title="About"/>
+            <item
+                android:id="@+id/action_logout"
+                android:icon="@drawable/systemlogout"
+                android:showAsAction="always"
+                android:title="Logout"/>
+        </menu>
     </item>
+
 </menu>

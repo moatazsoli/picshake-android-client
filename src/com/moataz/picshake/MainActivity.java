@@ -144,51 +144,69 @@ public class MainActivity extends Activity {
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    // Handle presses on the action bar items
-	    switch (item.getItemId()) {
-	        case R.id.action_logout:
-	        	preferences.removeValue(_USERNAME_);
-				preferences.removeValue(_PASSWORD_);
-				preferences.removeValue(_SAVEDUSER_);
-				preferences.put("CheckBox_Value", "0");
-				Intent intent = new Intent(MainActivity.this, SigninPage.class);
-            	startActivity(intent);
-            	finish();
-	            return true;
-	            
-	        case R.id.action_tutorial:	        
-	        	AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-	    		alertDialog.setTitle("Tutorial Completed")
-	    		.setMessage("Would you like to view the tutorial?")	       
-	            .setNegativeButton("No", new DialogInterface.OnClickListener() {
-	                @Override
-	                public void onClick(DialogInterface dialog, int id) {
-	                    // User clicked OK, so save the mSelectedItems results somewhere
-	                    // or return them to the component that opened the dialog	
-	                    dialog.dismiss();		               
-	                }
-	            })
-	             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-	                @Override
-	                public void onClick(DialogInterface dialog, int id) {
-	                    // User clicked OK, so save the mSelectedItems results somewhere
-	                    // or return them to the component that opened the dialog		           
-	                	preferences.putBoolean("firstTime", false);
-	          		    dialog.dismiss();
-	          		    Intent intent = new Intent(MainActivity.this, SigninPage.class);
-	          		    startActivity(intent);
-	          		    finish();		               
-	                }
-	            });
-	    		alertDialog.create();
-	    		alertDialog.show();
-	        	return true;
-	        	
-	        case R.id.action_info:
-	        	Utils.showAlert("About PicShake", "<p>Version 1.0</p><p>PicShake</p><p>Copyright 2014 Valyria Inc. All rights reserved.</p><p>This is only a non official Beta Version of the app</p><p><a href='http://hezzapp.appspot.com/terms'>Terms of Use</a></p><p><a href='http://hezzapp.appspot.com/privacy'>Privacy Policy</a></p>", MainActivity.this);
-	        default:
-	            return super.onOptionsItemSelected(item);
-	    }
+		// Handle presses on the action bar items
+		switch (item.getItemId()) {
+		case R.id.action_share:
+			String message = "@PicShake! SNAP, SHAKE, SHARE! With a new #ShakeToShare twist.\n#Selfies #Pics #GroupPics.\n https://play.google.com/store/apps/details?id=com.moataz.picshake&hl=en";
+			Intent share = new Intent(Intent.ACTION_SEND);
+			share.setType("text/plain");
+			share.putExtra(Intent.EXTRA_TEXT, message);
+
+			startActivity(Intent.createChooser(share, "Choose an app to share through"));
+			return true;
+
+
+		case R.id.action_logout:
+			preferences.removeValue(_USERNAME_);
+			preferences.removeValue(_PASSWORD_);
+			preferences.removeValue(_SAVEDUSER_);
+			preferences.put("CheckBox_Value", "0");
+			Intent intent = new Intent(MainActivity.this, SigninPage.class);
+			startActivity(intent);
+			finish();
+			return true;
+
+		case R.id.action_tutorial:	        
+			AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+			alertDialog.setTitle("Tutorial Completed")
+			.setMessage("Would you like to view the tutorial?")	       
+			.setNegativeButton("No", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int id) {
+					// User clicked OK, so save the mSelectedItems results somewhere
+					// or return them to the component that opened the dialog	
+					dialog.dismiss();		               
+				}
+			})
+			.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int id) {
+					// User clicked OK, so save the mSelectedItems results somewhere
+					// or return them to the component that opened the dialog		           
+					preferences.putBoolean("firstTime", false);
+					dialog.dismiss();
+					Intent intent = new Intent(MainActivity.this, SigninPage.class);
+					startActivity(intent);
+					finish();		               
+				}
+			});
+			alertDialog.create();
+			alertDialog.show();
+			return true;
+
+		case R.id.action_info:
+			Utils.showAlert("About PicShake", "<p>Version 1.2</p>" +
+					"<p>PicShake</p>" +
+					"<p>PicShake is an awesome app used for sharing beautiful moments captured in pictues in a very easy and a straight way with no need for contact info</p>"+
+					"<p>Checkout our website <a href='http://www.picshake.ca'>www.picshake.ca</p>"+
+					"<p><a href='http://hezzapp.appspot.com/terms'>Terms of Use</a></p>" +
+					"<p><a href='http://hezzapp.appspot.com/privacy'>Privacy Policy</a></p>" +
+					"</a> Copyright 2014 Valyria Inc. All rights reserved.</p>", MainActivity.this);
+			break;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+		return super.onOptionsItemSelected(item);
 	}
 	
 	
