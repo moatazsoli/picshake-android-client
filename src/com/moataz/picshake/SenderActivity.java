@@ -521,39 +521,52 @@ AccelerometerListener {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		
+		final String[] image_radio = {"Small","Medium","Actual"};
 		// Choose what to do based on the request code
 		switch (requestCode) {
 		
 		case CAMERA_CAPTURE_IMAGE_REQUEST_CODE:
 			if (resultCode == RESULT_OK) {
 				
-				final Dialog dialog = new Dialog(this);
-				dialog.setTitle("Choose Image Size");
-				dialog.setContentView(R.layout.imagesize);
-				dialog.show();
-			
-				RadioGroup group = (RadioGroup) dialog.findViewById(R.id.radioGroup);
 				
-				group.setOnCheckedChangeListener(new OnCheckedChangeListener() 
-		        {
-		            public void onCheckedChanged(RadioGroup group, int checkedId) 
-		            {
-		                // TODO Auto-generated method stub
-		                if(R.id.small == checkedId)
-		                {
-		                	Toast.makeText(SenderActivity.this, "small", Toast.LENGTH_SHORT).show();
-		                	imageSize = SMALL;		 
-		                }else if(R.id.medium == checkedId){
-		                	Toast.makeText(SenderActivity.this, "medium", Toast.LENGTH_SHORT).show();
+				
+				AlertDialog.Builder builder2=new AlertDialog.Builder(SenderActivity.this)
+				.setTitle("Choose Image Size")
+				.setSingleChoiceItems(image_radio, -1, new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						//Toast.makeText(getApplicationContext(),
+						//"The selected color is "+image_radio[which], Toast.LENGTH_LONG).show();
+						
+						switch(which)
+						{
+						case 0:
+//							Toast.makeText(SenderActivity.this, "small", Toast.LENGTH_SHORT).show();
+		                	imageSize = SMALL;
+		                	break;
+						case 1:
+//		                	Toast.makeText(SenderActivity.this, "medium", Toast.LENGTH_SHORT).show();
 		                	imageSize = MEDUIM;
-		                }else if(R.id.actual == checkedId){
-		                	Toast.makeText(SenderActivity.this, "original", Toast.LENGTH_SHORT).show();
+		                	break;
+						case 2:
+//		                	Toast.makeText(SenderActivity.this, "original", Toast.LENGTH_SHORT).show();
 		                	imageSize = ORIGINAL;
-		                }
-		                dialog.dismiss();
-		                new LoadPublicTags().execute();
-		            }
-		        });
+		                	break;
+						default:
+							Toast.makeText(SenderActivity.this, "Error, did not select image size!", Toast.LENGTH_LONG).show();
+							
+						}
+						
+						dialog.dismiss();
+			            new LoadPublicTags().execute();
+						
+					}
+				});
+				AlertDialog alertdialog2=builder2.create();
+				
+				alertdialog2.show();
 				
                 // successfully captured the image
 				String picturePath = fileUri.getPath();

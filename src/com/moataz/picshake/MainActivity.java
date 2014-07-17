@@ -6,6 +6,7 @@ import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Fragment;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -20,6 +21,9 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,7 +36,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
 	
 	static int countDemo = 1;
 
@@ -43,16 +47,20 @@ public class MainActivity extends Activity {
     private Animation sendActivityVanish;
     private Animation takePicVanish;
     private Animation receiveActivityVanish;
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		
-		//check for tutorial
+//		//check for tutorial
 		if(!preferences.getBoolean("firstTime", false)) {
-			showActivityOverlay();			
+	
+			showTutorialFragment();
+			showTutorialAlert();
 		}
+
 		
 		setupActionAnimationListeners();
 	}
@@ -68,72 +76,6 @@ public class MainActivity extends Activity {
 	public void onBackPressed() {
 	    moveTaskToBack(true);
 	}
-	
-	
-	private void showActivityOverlay() {
-		final Dialog dialog = new Dialog(this,
-		android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-
-		dialog.setContentView(R.layout.overlay_activity);
-
-		final LinearLayout layout = (LinearLayout) dialog
-		.findViewById(R.id.llOverlay_activity);
-//		ImageView img = (ImageView) findViewById(R.drawable.startup1);
-//		layout.addView(img);
-		ImageView im =  (ImageView) dialog.findViewById(R.id.ivOverlayEntertask);
-		im.setImageResource(R.drawable.startup1);
-		layout.removeAllViews();
-		layout.addView(im);
-		layout.setBackgroundColor(Color.TRANSPARENT);
-		layout.setOnClickListener(new OnClickListener() {
-
-		@Override
-		public void onClick(View arg0) {
-			ImageView im =  (ImageView) dialog.findViewById(R.id.ivOverlayEntertask);
-			layout.removeAllViews();
-			countDemo++;
-			switch (countDemo){
-			
-				case 2:
-					im.setImageResource(R.drawable.startup2);					
-					layout.addView(im);
-					break;
-				case 3:
-					im.setImageResource(R.drawable.startup3);					
-					layout.addView(im);
-					break;
-				case 4:
-					im.setImageResource(R.drawable.startup4);					
-					layout.addView(im);
-					break;
-				case 5:
-					im.setImageResource(R.drawable.startup5);					
-					layout.addView(im);
-					break;
-				case 6:
-					im.setImageResource(R.drawable.startup6);					
-					layout.addView(im);
-					break;
-				case 7:
-					im.setImageResource(R.drawable.startup7);					
-					layout.addView(im);
-					break;
-				case 8:
-					dialog.dismiss();
-					showTutorialAlert();
-					break;
-				default:
-					dialog.dismiss();
-				
-			}
-			
-
-		}
-
-		});
-
-		dialog.show();
-		}
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -182,12 +124,9 @@ public class MainActivity extends Activity {
 				@Override
 				public void onClick(DialogInterface dialog, int id) {
 					// User clicked OK, so save the mSelectedItems results somewhere
-					// or return them to the component that opened the dialog		           
-					preferences.putBoolean("firstTime", false);
+					// or return them to the component that opened the dialog		           					
 					dialog.dismiss();
-					Intent intent = new Intent(MainActivity.this, SigninPage.class);
-					startActivity(intent);
-					finish();		               
+					showTutorialFragment();	               
 				}
 			});
 			alertDialog.create();
@@ -326,6 +265,15 @@ public class MainActivity extends Activity {
            });
 		alertDialog.create();
 		alertDialog.show();
+	}
+	
+	public void showTutorialFragment()
+	{
+        android.app.FragmentManager fragmentManager = getFragmentManager();
+        android.app.FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        TutorialFragment fragment = new TutorialFragment();
+        fragmentTransaction.replace(R.id.FragmentContainer, fragment);
+        fragmentTransaction.commit();
 	}
 
 	

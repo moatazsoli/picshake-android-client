@@ -14,6 +14,7 @@
     <string name="send_button">Add from Existing</string>
     <string name="receive_button">Receive</string>
     <string name="title_activity_sender">SenderActivity</string>
+     <string name="title_activity_tutorial">TutorialActivity</string>
 
     <!-- LOCATION -->
     <string name="getLocation">Get Location</string>
