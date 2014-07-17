@@ -36,7 +36,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends Activity {
 	
 	static int countDemo = 1;
 
@@ -124,7 +124,8 @@ public class MainActivity extends FragmentActivity {
 				@Override
 				public void onClick(DialogInterface dialog, int id) {
 					// User clicked OK, so save the mSelectedItems results somewhere
-					// or return them to the component that opened the dialog		           					
+					// or return them to the component that opened the dialog		           
+					
 					dialog.dismiss();
 					showTutorialFragment();	               
 				}
