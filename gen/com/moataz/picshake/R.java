@@ -313,7 +313,7 @@ containing a value of this type.
         public static final int ic_plusone_standard_off_client=0x7f020034;
         public static final int ic_plusone_tall_off_client=0x7f020035;
         public static final int ic_stat_notify_pic=0x7f020036;
-        public static final int light_black_=0x7f02004a;
+        public static final int light_black_=0x7f020049;
         public static final int no_media=0x7f020037;
         public static final int on_focus_checkbox=0x7f020038;
         public static final int photogrid_list_selector=0x7f020039;
@@ -330,9 +330,8 @@ containing a value of this type.
         public static final int startup9=0x7f020044;
         public static final int systemlogout=0x7f020045;
         public static final int tetoo=0x7f020046;
-        public static final int tetoo1=0x7f020047;
-        public static final int tile=0x7f020048;
-        public static final int top_bar=0x7f020049;
+        public static final int tile=0x7f020047;
+        public static final int top_bar=0x7f020048;
     }
     public static final class id {
         public static final int FragmentContainer=0x7f07000a;
