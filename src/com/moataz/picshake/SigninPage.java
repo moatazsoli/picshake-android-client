@@ -65,7 +65,6 @@ public class SigninPage extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_signin_page);
 		// Show the Up button in the action bar.
-		boolean resume = true;
 		if (!isGPSEnabled()) {
 			showGpsSettingsAlert();
 		}
@@ -74,28 +73,28 @@ public class SigninPage extends Activity {
 			showNoInternetSettingsAlert();
 		}
 		getActionBar().setDisplayHomeAsUpEnabled(false);
-			username = (EditText) findViewById(R.id.usernamein);
-			password = (EditText) findViewById(R.id.password1in);
-			stay_signed = (CheckBox) findViewById(R.id.keepmesignedin);
+		username = (EditText) findViewById(R.id.usernamein);
+		password = (EditText) findViewById(R.id.password1in);
+		stay_signed = (CheckBox) findViewById(R.id.keepmesignedin);
 
-			progressDialog = new ProgressDialog(this);
-			progressDialog.setMessage("Signing In...");
-			progressDialog.setIndeterminate(false);
+		progressDialog = new ProgressDialog(this);
+		progressDialog.setMessage("Signing In...");
+		progressDialog.setIndeterminate(false);
 
-			progressDialogmsg = new ProgressDialog(this);
-			progressDialogmsg.setMessage("Please wait...");
-			progressDialogmsg.setIndeterminate(false);
-			preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
-			checkBoxValue = preferences.getString("CheckBox_Value");
-			if(checkBoxValue != null && checkBoxValue.equals("1"))
-			{
-				String user = preferences.getString(_USERNAME_);
-				String pass = preferences.getString(_PASSWORD_);
-				username.setText(user);
-				password.setText(pass);
-				stay_signed.setChecked(true);
-				new SignInRequest().execute();
-			}
+		progressDialogmsg = new ProgressDialog(this);
+		progressDialogmsg.setMessage("Please wait...");
+		progressDialogmsg.setIndeterminate(false);
+		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
+		checkBoxValue = preferences.getString("CheckBox_Value");
+		if(checkBoxValue != null && checkBoxValue.equals("1"))
+		{
+			String user = preferences.getString(_USERNAME_);
+			String pass = preferences.getString(_PASSWORD_);
+			username.setText(user);
+			password.setText(pass);
+			stay_signed.setChecked(true);
+			new SignInRequest().execute();
+		}
 	}
 
 
@@ -316,7 +315,6 @@ public class SigninPage extends Activity {
         	
         	switch(Integer.parseInt(result)){
         	case 3000:
-        		preferences.put(_SAVEDUSER_, _username);
         		if(stay_signed.isChecked())
         		{
         			preferences.put(_USERNAME_, username.getText().toString());
@@ -326,6 +324,7 @@ public class SigninPage extends Activity {
         			preferences.put("CheckBox_Value", "0");
         		}
         		Intent intent = new Intent(SigninPage.this, MainActivity.class);
+        		intent.putExtra(_SAVEDUSER_, username.getText().toString());
             	startActivity(intent);
             	progressDialog.dismiss();
             	Toast.makeText(getBaseContext(), 

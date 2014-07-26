@@ -119,7 +119,7 @@ AccelerometerListener {
 //	private GridView grid;
 	private GalleryAdapter adapter;
 	public final static int RESULT_LOAD_MULTI_IMAGES = 200;
-	
+	private String storedUserName;
 	
 	private int selectOrCamera = 1;
 	//Max size of bitmap that can be stored 
@@ -184,6 +184,14 @@ AccelerometerListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_sender);
+		
+		Bundle extras = getIntent().getExtras();
+		if (extras != null) {
+			String data= extras.getString(_SAVEDUSER_);
+			if (data!= null && data != "") {
+				storedUserName = data;
+			}        
+		}
 		
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		username = preferences.getString(_SAVEDUSER_);
@@ -1010,11 +1018,8 @@ AccelerometerListener {
 			bmToUpload.compress(CompressFormat.JPEG, imageSize, bos);
 			byte[] data = bos.toByteArray();
 			HttpPost postRequest = new HttpPost(uploadURL);
-			if(username == null)
-			{
-				username = "";
-			}
-			ByteArrayBody bab = new ByteArrayBody(data, "image/jpeg","image-"+username+".jpg");
+			String passcode_used = passcode.getText().toString();
+			ByteArrayBody bab = new ByteArrayBody(data, "image/jpeg","image-"+storedUserName+"-"+passcode_used+".jpg");
 			
 			final long totalSize= bab.getContentLength();
 			CustomMultiPartEntity reqEntity = new CustomMultiPartEntity(new ProgressListener()
@@ -1043,10 +1048,7 @@ AccelerometerListener {
 				reqEntity.addPart("picsource", new StringBody("camera"));
 			}
 			reqEntity.addPart("imagesize", new StringBody(imageSize+""));
-			if(username != null && !username.equals(""))
-			{
-				reqEntity.addPart("username", new StringBody(username));
-			}
+			reqEntity.addPart("username", new StringBody(storedUserName));
 			
 			
 			postRequest.setEntity(reqEntity);

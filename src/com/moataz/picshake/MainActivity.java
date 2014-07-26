@@ -44,6 +44,7 @@ public class MainActivity extends Activity {
     private final String _USERNAME_ = "userId";
     private final String _PASSWORD_ = "password";
     private final String _SAVEDUSER_ = "saveduser";
+    private String storedUserName;
     private Animation sendActivityVanish;
     private Animation takePicVanish;
     private Animation receiveActivityVanish;
@@ -52,9 +53,16 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		Bundle extras = getIntent().getExtras();
+		if (extras != null) {
+			String data= extras.getString(_SAVEDUSER_);
+			if (data!= null && data != "") {
+				storedUserName = data;
+			}        
+		}
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		
-//		//check for tutorial
+		//		//check for tutorial
 		if(!preferences.getBoolean("firstTime", false)) {
 	
 			showTutorialFragment();
@@ -159,6 +167,7 @@ public class MainActivity extends Activity {
 			public void onAnimationStart(Animation animation) {
 				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
 			    intent.putExtra("selectOrCamera", 0); //camera or select
+			    intent.putExtra(_SAVEDUSER_, storedUserName);
 			    // 0 is select , 1 is camera
 			    startActivity(intent);
 			}
@@ -181,6 +190,7 @@ public class MainActivity extends Activity {
 			public void onAnimationStart(Animation animation) {
 				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
 			    intent.putExtra("selectOrCamera", 1); //camera or select
+			    intent.putExtra(_SAVEDUSER_, storedUserName);
 			     //0 is select , 1 is camera
 			    startActivity(intent);
 			}
