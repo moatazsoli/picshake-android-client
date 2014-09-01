@@ -12,25 +12,23 @@ import android.view.Menu;
 
 public class Splashscreen extends Activity {
 
-	private String checkBoxValue = "";
-	private SecurePreferences preferences;
-	private final String _USERNAME_ = "userId";
-	private final String _SAVEDUSER_ = "saveduser";
-	String user;
-	String pass;
-
+	 private String checkBoxValue = "";
+	 private SecurePreferences preferences;
+	    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_splashscreen);
 		getActionBar().setDisplayHomeAsUpEnabled(false);
+		if(false)
+		{
+			Intent intent = new Intent(getApplicationContext(),List.class);
+	    	startActivity(intent);
+	    	finish();
+		}else{
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		checkBoxValue = preferences.getString("CheckBox_Value");
-		user = preferences.getString(_USERNAME_);
-		if(checkBoxValue != null && 
-		   checkBoxValue.equals("1") &&
-		   user != null &&
-		   user != "")
+		if(checkBoxValue != null && checkBoxValue.equals("1"))
 		{
 			boolean passFlag = true;
 			if(!isNetworkAvailable())
@@ -47,7 +45,6 @@ public class Splashscreen extends Activity {
 			if(passFlag)
 			{
 				Intent intent = new Intent(Splashscreen.this, MainActivity.class);
-				intent.putExtra(_SAVEDUSER_, user);
             	startActivity(intent);
             	finish();
 			}
@@ -62,6 +59,7 @@ public class Splashscreen extends Activity {
 		    	finish();
 		    }
 		}, 2000);
+		}
 		}
 	}
 

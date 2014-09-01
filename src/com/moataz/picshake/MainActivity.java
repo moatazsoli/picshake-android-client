@@ -1,17 +1,42 @@
 package com.moataz.picshake;
 
 
+import com.facebook.Session;
+
+import android.app.ActionBar;
+import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.Fragment;
 import android.app.NotificationManager;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.text.Html;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 	
@@ -21,7 +46,6 @@ public class MainActivity extends Activity {
     private final String _USERNAME_ = "userId";
     private final String _PASSWORD_ = "password";
     private final String _SAVEDUSER_ = "saveduser";
-    private String storedUserName;
     private Animation sendActivityVanish;
     private Animation takePicVanish;
     private Animation receiveActivityVanish;
@@ -30,16 +54,9 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		Bundle extras = getIntent().getExtras();
-		if (extras != null) {
-			String data= extras.getString(_SAVEDUSER_);
-			if (data!= null && data != "") {
-				storedUserName = data;
-			}        
-		}
 		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
 		
-		//		//check for tutorial
+//		//check for tutorial
 		if(!preferences.getBoolean("firstTime", false)) {
 	
 			showTutorialFragment();
@@ -88,6 +105,7 @@ public class MainActivity extends Activity {
 			preferences.removeValue(_PASSWORD_);
 			preferences.removeValue(_SAVEDUSER_);
 			preferences.put("CheckBox_Value", "0");
+			callFacebookLogout(this);
 			Intent intent = new Intent(MainActivity.this, SigninPage.class);
 			startActivity(intent);
 			finish();
@@ -144,7 +162,6 @@ public class MainActivity extends Activity {
 			public void onAnimationStart(Animation animation) {
 				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
 			    intent.putExtra("selectOrCamera", 0); //camera or select
-			    intent.putExtra(_SAVEDUSER_, storedUserName);
 			    // 0 is select , 1 is camera
 			    startActivity(intent);
 			}
@@ -167,7 +184,6 @@ public class MainActivity extends Activity {
 			public void onAnimationStart(Animation animation) {
 				Intent intent = new Intent(MainActivity.this, SenderActivity.class);
 			    intent.putExtra("selectOrCamera", 1); //camera or select
-			    intent.putExtra(_SAVEDUSER_, storedUserName);
 			     //0 is select , 1 is camera
 			    startActivity(intent);
 			}
@@ -264,5 +280,27 @@ public class MainActivity extends Activity {
         fragmentTransaction.commit();
 	}
 
+	/**
+	 * Logout From Facebook 
+	 */
+	public static void callFacebookLogout(Context context) {
+	    Session session = Session.getActiveSession();
+	    if (session != null) {
+
+	        if (!session.isClosed()) {
+	            session.closeAndClearTokenInformation();
+	            //clear your preferences if saved
+	        }
+	    } else {
+
+	        session = new Session(context);
+	        Session.setActiveSession(session);
+
+	        session.closeAndClearTokenInformation();
+	            //clear your preferences if saved
+
+	    }
+
+	}
 	
 }

@@ -1,14 +1,21 @@
 package com.moataz.picshake;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
@@ -19,12 +26,15 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,12 +45,13 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
-public class SigninPage extends Activity {
+public class SigninPage extends FragmentActivity {
 
 	EditText username;
     EditText password;
     CheckBox stay_signed;
     String SIGNIN_URL = "http://picshare.biz/customauth/loginme";
+    String SIGNUP_URL = "http://picshare.biz/customauth/simpleregister";
     HttpResponse response=null;
     private ProgressDialog progressDialog;
     private ProgressDialog progressDialogmsg;
@@ -50,12 +61,30 @@ public class SigninPage extends Activity {
     private final String _PASSWORD_ = "password";
     private final String _SAVEDUSER_ = "saveduser";
     
+    String fs, ls, emails;
     
+	private FacebookFragment facebookFragment;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_signin_page);
 		// Show the Up button in the action bar.
+		boolean resume = true;
+		
+        if (savedInstanceState == null) {
+        	// Add the fragment on initial activity setup
+        	facebookFragment = new FacebookFragment();
+		    getSupportFragmentManager()
+		        .beginTransaction()
+		        .add(android.R.id.content, facebookFragment)
+		        .commit();
+		    } else {
+		        // Or set the fragment from restored state info
+		    	facebookFragment = (FacebookFragment) getSupportFragmentManager()
+		        .findFragmentById(android.R.id.content);
+		    }
+		
 		if (!isGPSEnabled()) {
 			showGpsSettingsAlert();
 		}
@@ -64,28 +93,29 @@ public class SigninPage extends Activity {
 			showNoInternetSettingsAlert();
 		}
 		getActionBar().setDisplayHomeAsUpEnabled(false);
-		username = (EditText) findViewById(R.id.usernamein);
-		password = (EditText) findViewById(R.id.password1in);
-		stay_signed = (CheckBox) findViewById(R.id.keepmesignedin);
+			username = (EditText) findViewById(R.id.usernamein);
+			password = (EditText) findViewById(R.id.password1in);
+			stay_signed = (CheckBox) findViewById(R.id.keepmesignedin);
 
-		progressDialog = new ProgressDialog(this);
-		progressDialog.setMessage("Signing In...");
-		progressDialog.setIndeterminate(false);
+			progressDialog = new ProgressDialog(this);
+			progressDialog.setMessage("Signing In...");
+			progressDialog.setIndeterminate(false);
 
-		progressDialogmsg = new ProgressDialog(this);
-		progressDialogmsg.setMessage("Please wait...");
-		progressDialogmsg.setIndeterminate(false);
-		preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
-		checkBoxValue = preferences.getString("CheckBox_Value");
-		if(checkBoxValue != null && checkBoxValue.equals("1"))
-		{
-			String user = preferences.getString(_USERNAME_);
-			String pass = preferences.getString(_PASSWORD_);
-			username.setText(user);
-			password.setText(pass);
-			stay_signed.setChecked(true);
-			new SignInRequest().execute();
-		}
+			progressDialogmsg = new ProgressDialog(this);
+			progressDialogmsg.setMessage("Please wait...");
+			progressDialogmsg.setIndeterminate(false);
+			preferences = new SecurePreferences(this, "my-preferences", "TopSecretKey123kdd", true);
+			checkBoxValue = preferences.getString("CheckBox_Value");
+			if(checkBoxValue != null && checkBoxValue.equals("1"))
+			{
+				String user = preferences.getString(_USERNAME_);
+				String pass = preferences.getString(_PASSWORD_);
+				username.setText(user);
+				password.setText(pass);
+				stay_signed.setChecked(true);
+				new SignInRequest().execute();
+			}
+			
 	}
 
 
@@ -197,7 +227,7 @@ public class SigninPage extends Activity {
 		getMenuInflater().inflate(R.menu.signin_page, menu);
 		return true;
 	}
-
+	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -238,6 +268,20 @@ public class SigninPage extends Activity {
         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
         return true;
     }
+	
+	
+	public void fbSignin() {
+		new SignInFacebookRequest().execute();
+	}
+	
+	public void fbSignup(String firstname, String lastname, String emailfb) {
+//		Toast.makeText(this, "GOT " + firstname + " " + lastname + " " + emailfb, Toast.LENGTH_LONG).show();
+		fs = firstname;
+		ls = lastname;
+		emails = emailfb;
+		new SignUpFbRequest().execute();
+		new SignInFacebookRequest().execute();
+	}
 	
 	private class SignInRequest extends AsyncTask<Void, Void, String> {
 		String result = null;
@@ -306,6 +350,7 @@ public class SigninPage extends Activity {
         	
         	switch(Integer.parseInt(result)){
         	case 3000:
+        		preferences.put(_SAVEDUSER_, _username);
         		if(stay_signed.isChecked())
         		{
         			preferences.put(_USERNAME_, username.getText().toString());
@@ -315,7 +360,6 @@ public class SigninPage extends Activity {
         			preferences.put("CheckBox_Value", "0");
         		}
         		Intent intent = new Intent(SigninPage.this, MainActivity.class);
-        		intent.putExtra(_SAVEDUSER_, username.getText().toString());
             	startActivity(intent);
             	progressDialog.dismiss();
             	Toast.makeText(getBaseContext(), 
@@ -352,5 +396,174 @@ public class SigninPage extends Activity {
         	}
         }
 	}
+	
+	private class SignInFacebookRequest extends AsyncTask<Void, Void, String> {
+		String result = null;
+		String _username;
+		String _password;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog.show();
+        }
+ 
+        @Override
+        protected String doInBackground(Void... URL) {
+        	
+        	if(!isNetworkAvailable())
+        	{
+        		return "3005";
+        	}else{
+        		
+        		//Try to sign up with facebook account
+        		//If account exists, just sign in. Facebook takes care of authentication
+        		
+        		//Let the user auto sign in unles he signed out of facebook or PicShake
+        		preferences.put("CheckBox_Value", "1");
+        		
+        		return "3000";
+        	}
+        }
+ 
+        @Override
+        protected void onPostExecute(String result) {
+//        	Toast.makeText(getBaseContext(), result, 
+//	        		Toast.LENGTH_LONG).show();
+        	
+        	switch(Integer.parseInt(result)){
+        	case 3000:
+        		preferences.put(_SAVEDUSER_, _username);
+        		if(stay_signed.isChecked())
+        		{
+        			preferences.put(_USERNAME_, username.getText().toString());
+        			preferences.put(_PASSWORD_, password.getText().toString());
+        			preferences.put("CheckBox_Value", "1");
+        		}
+        		
+        		Intent intent = new Intent(SigninPage.this, MainActivity.class);
+            	startActivity(intent);
+            	progressDialog.dismiss();
+            	Toast.makeText(getBaseContext(), 
+        				getResources().getString(R.string.login_success), 
+    	        		Toast.LENGTH_LONG).show();
+            	finish();
+        		break;
+        	case 3001:
+        		progressDialog.dismiss();
+        		Toast.makeText(getBaseContext(), 
+        				getResources().getString(R.string.user_inactive),
+    	        		Toast.LENGTH_LONG).show();
+        		break;
+        	case 3003:
+        		progressDialog.dismiss();
+        		Toast.makeText(getBaseContext(), 
+        				getResources().getString(R.string.invalid_login), 
+        				Toast.LENGTH_LONG).show();
+        		break;
+        	case 3004:
+        		progressDialog.dismiss();
+        		Toast.makeText(getBaseContext(), 
+        				getResources().getString(R.string.empty_user_or_pass), 
+        				Toast.LENGTH_LONG).show();
+        		break;
+        	case 3005:
+        		progressDialog.dismiss();
+        		Toast.makeText(getBaseContext(), 
+        				getResources().getString(R.string.no_internet), 
+        				Toast.LENGTH_LONG).show();
+        		break;
+        	default:
+        		progressDialog.dismiss();
+        	}
+        }
+	}
+	
+	
+	private class SignUpFbRequest extends AsyncTask<Void, Void, String> {
+		String result = null;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog.show();
+        }
+ 
+        @Override
+        protected String doInBackground(Void... URL) {
+            HttpClient httpClient = new DefaultHttpClient();
+            HttpPost request = new HttpPost(SIGNUP_URL);
+            
+            try {
+	            List<NameValuePair> postParameters = new ArrayList<NameValuePair>();
+	            postParameters.add(new BasicNameValuePair("username", fs+ls));
+	            postParameters.add(new BasicNameValuePair("email", "test1"+emails));
+	            postParameters.add(new BasicNameValuePair("password1", "1234"));
+	            postParameters.add(new BasicNameValuePair("firstname", fs));
+	            postParameters.add(new BasicNameValuePair("lastname", ls));
+	
+	            UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(
+	                    postParameters);
+	
+	            request.setEntity(formEntity);
+	            HttpResponse postresponse = httpClient.execute(request);
+	            
+	            //set global response to pass to next view
+	            response = postresponse;
+				BufferedReader reader1 = new BufferedReader(new InputStreamReader(
+						postresponse.getEntity().getContent(), "UTF-8"));
+				
+				String sResponse1;
+				StringBuilder s1 = new StringBuilder();
+
+				while ((sResponse1 = reader1.readLine()) != null) {
+					s1 = s1.append(sResponse1);
+				}
+				result = s1.toString();
+				
+            } catch(Exception e) {
+                // Do something about exceptions
+                result = e.getMessage();
+            }
+            return  result;
+        }
+ 
+        @Override
+        protected void onPostExecute(String result) {
+
+        	progressDialog.dismiss();
+			switch (Integer.parseInt(result)) {
+
+			case 2000:
+				Toast.makeText(
+						getBaseContext(),
+						getResources().getString(R.string.registration_success),
+						Toast.LENGTH_LONG).show();
+
+				preferences.put(_USERNAME_, fs);
+				preferences.put(_PASSWORD_, "1234");
+				preferences.put("CheckBox_Value", "1");
+				Intent intent = new Intent(SigninPage.this, SigninPage.class);
+				startActivity(intent);
+				finish();
+				break;
+				
+			case 2001:
+//        		Toast.makeText(getBaseContext(), 
+//        				getResources().getString(R.string.username_in_use),
+//    	        		Toast.LENGTH_LONG).show();
+        		break;
+        	case 2002:
+        		Toast.makeText(getBaseContext(), 
+        				getResources().getString(R.string.invalid_email), 
+    	        		Toast.LENGTH_LONG).show();
+        		break;
+        	case 2003:
+//        		Toast.makeText(getBaseContext(), 
+//        				getResources().getString(R.string.email_in_use), 
+//    	        		Toast.LENGTH_LONG).show();
+        		break;
+        	}
+        }
+    }
+
 
 }
